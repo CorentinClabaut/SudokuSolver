@@ -10,7 +10,7 @@ namespace sudoku
 
 struct FoundCells
 {
-    std::queue<SharedCell> m_FoundCells;
+    std::queue<SharedCell> m_Queue;
     std::mutex m_Mutex;
 };
 
