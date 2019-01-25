@@ -3,8 +3,6 @@
 #include <algorithm>
 
 #include <boost/range/adaptors.hpp>
-#include <boost/range/algorithm.hpp>
-#include <boost/range/algorithm_ext.hpp>
 #include <boost/algorithm/algorithm.hpp>
 #include <boost/algorithm/cxx11/all_of.hpp>
 #include <boost/algorithm/cxx11/none_of.hpp>
@@ -54,22 +52,9 @@ bool GridStatusImpl::AreSetCellsValid(Grid const& grid) const
     return AreCellsValid(cellsSet, grid);
 }
 
-std::vector<SharedCell> GridStatusImpl::GetRelatedCells(Position const& selectedPosition, Grid const& grid) const
-{
-    std::vector<SharedCell> relatedCells;
-
-    boost::range::push_back(relatedCells, m_RelatedCellsGetter->GetRelatedHorizontalCells(selectedPosition, grid));
-    boost::range::push_back(relatedCells, m_RelatedCellsGetter->GetRelatedVerticalCells(selectedPosition, grid));
-    boost::range::push_back(relatedCells, m_RelatedCellsGetter->GetRelatedBlockCells(selectedPosition, grid));
-
-    boost::sort(relatedCells);
-
-    return boost::copy_range<std::vector<SharedCell>>( boost::range::unique(relatedCells) );
-}
-
 std::vector<Value> GridStatusImpl::GetRelatedCellsSetValue(Position const& selectedPosition, Grid const& grid) const
 {
-    auto relatedCells = GetRelatedCells(selectedPosition, grid);
+    auto relatedCells = m_RelatedCellsGetter->GetAllRelatedCells(selectedPosition, grid);
 
     return GetSetCellValues(relatedCells);
 }

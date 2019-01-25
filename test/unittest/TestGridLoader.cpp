@@ -7,6 +7,8 @@ using testing::Eq;
 
 namespace sudoku
 {
+namespace test
+{
 
 class TestGridLoader : public ::testing::Test
 {
@@ -17,4 +19,5 @@ public:
     GridLoader m_GridLoader;
 };
 
+} // test
 } // namespace sudoku

@@ -22,6 +22,8 @@ public:
 
     Position const& GetPosition() const;
 
+    bool operator==(Cell const& cell) const;
+
 private:
     PossibleValues m_Possibilities;
     mutable std::shared_timed_mutex m_PossibilitiesMutex;

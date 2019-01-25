@@ -53,3 +53,9 @@ const Position& Cell::GetPosition() const
 {
     return m_Position;
 }
+
+bool Cell::operator==(Cell const& cell) const
+{
+    return m_Possibilities == cell.m_Possibilities
+            && m_Position == cell.m_Position;
+}

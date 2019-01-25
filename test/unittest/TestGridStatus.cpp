@@ -31,47 +31,15 @@ public:
         return std::make_unique<GridStatusImpl>(std::move(m_RelatedCellsGetter));
     }
 
-    CellsGroup GetCells(Grid& grid, std::vector<Position> const& relatedPositions)
-    {
-        CellsGroup cellsGroup;
-
-        boost::transform(relatedPositions, std::back_inserter(cellsGroup), [&](auto const& p){ return grid.m_Cells[p.m_Row][p.m_Col]; });
-
-        return cellsGroup;
-    }
-
-    void ExpectGetRelatedHorizontalCells(Grid& grid, Position const& selectedPosition, std::vector<Position> const& relatedPositions)
-    {
-        EXPECT_CALL(*m_RelatedCellsGetter, GetRelatedHorizontalCells(selectedPosition, Ref(grid))).WillRepeatedly(Return(GetCells(grid, relatedPositions)));
-    }
-
-    void ExpectGetRelatedVerticalCells(Grid& grid, Position const& selectedPosition, std::vector<Position> const& relatedPositions)
-    {
-        EXPECT_CALL(*m_RelatedCellsGetter, GetRelatedVerticalCells(selectedPosition, Ref(grid))).WillRepeatedly(Return(GetCells(grid, relatedPositions)));
-    }
-
-    void ExpectGetRelatedBlockCells(Grid& grid, Position const& selectedPosition, std::vector<Position> const& relatedPositions)
-    {
-        EXPECT_CALL(*m_RelatedCellsGetter, GetRelatedBlockCells(selectedPosition, Ref(grid))).WillRepeatedly(Return(GetCells(grid, relatedPositions)));
-    }
-
     void SetupRelatedCellsGetter(Grid& grid)
     {
-        ExpectGetRelatedHorizontalCells(grid, {0, 0}, {{0, 1}, {0, 2}, {0, 3}});
-        ExpectGetRelatedVerticalCells(grid, {0, 0}, {{1, 0}, {2, 0}, {3, 0}});
-        ExpectGetRelatedBlockCells(grid, {0, 0}, {{0, 1}, {1, 0}, {1, 1}});
+        m_RelatedCellsGetter->ExpectGetAllRelatedCells(grid, {0, 0}, {{0, 1}, {0, 2}, {0, 3}, {1, 0}, {2, 0}, {3, 0}, {1, 1}});
 
-        ExpectGetRelatedHorizontalCells(grid, {0, 3}, {{0, 0}, {0, 1}, {0, 2}});
-        ExpectGetRelatedVerticalCells(grid, {0, 3}, {{1, 3}, {2, 3}, {3, 3}});
-        ExpectGetRelatedBlockCells(grid, {0, 3}, {{0, 2}, {1, 2}, {1, 3}});
+        m_RelatedCellsGetter->ExpectGetAllRelatedCells(grid, {0, 3}, {{0, 0}, {0, 1}, {0, 2}, {1, 3}, {2, 3}, {3, 3}, {1, 2}});
 
-        ExpectGetRelatedHorizontalCells(grid, {1, 1}, {{1, 0}, {1, 2}, {1, 3}});
-        ExpectGetRelatedVerticalCells(grid, {1, 1}, {{0, 1}, {2, 1}, {3, 1}});
-        ExpectGetRelatedBlockCells(grid, {1, 1}, {{0, 0}, {0, 1}, {1, 0}});
+        m_RelatedCellsGetter->ExpectGetAllRelatedCells(grid, {1, 1}, {{1, 0}, {1, 2}, {1, 3}, {0, 1}, {2, 1}, {3, 1}, {0, 0}});
 
-        ExpectGetRelatedHorizontalCells(grid, {3, 0}, {{3, 1}, {3, 2}, {3, 3}});
-        ExpectGetRelatedVerticalCells(grid, {3, 0}, {{0, 0}, {1, 0}, {2, 0}});
-        ExpectGetRelatedBlockCells(grid, {3, 0}, {{2, 0}, {2, 1}, {3, 1}});
+        m_RelatedCellsGetter->ExpectGetAllRelatedCells(grid, {3, 0}, {{3, 1}, {3, 2}, {3, 3}, {0, 0}, {1, 0}, {2, 0}, {2, 1}});
     }
 
     std::unique_ptr<MockRelatedCellsGetter> m_RelatedCellsGetter = std::make_unique<StrictMock<MockRelatedCellsGetter>>();

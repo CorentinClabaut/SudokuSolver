@@ -10,23 +10,15 @@
 
 #include <boost/range/irange.hpp>
 
+#include "utils/Utils.hpp"
+
 using testing::Eq;
 using testing::Ne;
 
 namespace sudoku
 {
-
-void RemoveAllCellPossibilitiesBut(Cell& cell, std::optional<Value> const& possibilityToKeep)
+namespace test
 {
-    std::list<Value> possibilitiesToRemove(9);
-    std::iota(possibilitiesToRemove.begin(), possibilitiesToRemove.end(), 1);
-
-    if (possibilityToKeep)
-        possibilitiesToRemove.remove(*possibilityToKeep);
-
-    for (auto possibility : possibilitiesToRemove)
-        cell.RemovePossibility(possibility);
-}
 
 void GetValueUntilFound(Cell const& cell)
 {
@@ -108,7 +100,7 @@ TEST_F(TestCell, RemoveAllPossibilitiesButOne)
 
     Cell cell(Position{1, 2}, 9);
 
-    RemoveAllCellPossibilitiesBut(cell, expectedValue);
+    RemoveAllCellPossibilitiesBut(cell, {expectedValue});
 
     auto value = cell.GetValue();
 
@@ -122,8 +114,8 @@ TEST_F(TestCell, RemoveSamePossibilitiesTwice)
 
     Cell cell(Position{1, 2}, 9);
 
-    RemoveAllCellPossibilitiesBut(cell, expectedValue);
-    RemoveAllCellPossibilitiesBut(cell, expectedValue);
+    RemoveAllCellPossibilitiesBut(cell, {expectedValue});
+    RemoveAllCellPossibilitiesBut(cell, {expectedValue});
 
     auto value = cell.GetValue();
 
@@ -149,8 +141,8 @@ TEST_F(TestCell, SeveralThreadsReadAndWriteOnCell)
 
         std::thread reader1(GetValueUntilFound, std::cref(cell));
 
-        std::thread writter1(RemoveAllCellPossibilitiesBut, std::ref(cell), std::cref(expectedValue));
-        std::thread writter2(RemoveAllCellPossibilitiesBut, std::ref(cell), std::cref(expectedValue));
+        std::thread writter1(RemoveAllCellPossibilitiesBut, std::ref(cell), std::unordered_set<Value>{expectedValue});
+        std::thread writter2(RemoveAllCellPossibilitiesBut, std::ref(cell), std::unordered_set<Value>{expectedValue});
 
         cell.SetValue(expectedValue);
 
@@ -166,4 +158,5 @@ TEST_F(TestCell, SeveralThreadsReadAndWriteOnCell)
     }
 }
 
+} // namespace test
 } // namespace sudoku

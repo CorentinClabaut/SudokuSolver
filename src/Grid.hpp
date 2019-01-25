@@ -24,4 +24,6 @@ struct Grid
 
 std::ostream& operator<<(std::ostream& os, Grid const& grid);
 
+bool operator==(const Grid& lhs, const Grid& rhs);
+
 } // namespace sudoku

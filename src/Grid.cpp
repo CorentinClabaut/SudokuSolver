@@ -97,4 +97,10 @@ std::ostream& operator<<(std::ostream& os, Grid const& grid)
     return os;
 }
 
+bool operator==(const Grid& lhs, const Grid& rhs)
+{
+    return lhs.m_GridSize == rhs.m_GridSize
+            && std::equal(lhs.begin(), lhs.end(), rhs.begin(), [](auto const& lhs, auto const& rhs){ return *lhs == *rhs; });
+}
+
 } // namespace sudoku
