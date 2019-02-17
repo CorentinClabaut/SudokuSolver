@@ -3,8 +3,6 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <boost/range/algorithm/transform.hpp>
-
 #include "utils/Utils.hpp"
 
 #include "mock/MockFoundCellsEnqueuer.hpp"

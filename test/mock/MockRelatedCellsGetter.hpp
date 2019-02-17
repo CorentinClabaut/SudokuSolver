@@ -2,6 +2,7 @@
 
 #include "RelatedCellsGetter.hpp"
 #include <gmock/gmock.h>
+#include <boost/range/algorithm/transform.hpp>
 
 #include "Grid.hpp"
 

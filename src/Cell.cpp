@@ -2,12 +2,10 @@
 
 #include <sstream>
 
-#include <boost/range/irange.hpp>
-
 using namespace sudoku;
 
 Cell::Cell(Position position, int gridSize) :
-    m_Possibilities(boost::copy_range<PossibleValues>(boost::irange(1, gridSize+1))),
+    m_Possibilities(CreatePossibilities<Possibilities>(gridSize)),
     m_Position(std::move(position))
 {}
 
@@ -47,6 +45,13 @@ std::optional<Value> Cell::GetValue() const
         return {};
 
     return *m_Possibilities.begin();
+}
+
+Possibilities Cell::GetPossibilities() const
+{
+    std::shared_lock<std::shared_timed_mutex> readLock(m_PossibilitiesMutex);
+
+    return m_Possibilities;
 }
 
 const Position& Cell::GetPosition() const

@@ -3,7 +3,7 @@
 #include <memory>
 #include <shared_mutex>
 
-#include "PossibleValues.hpp"
+#include "Possibilities.hpp"
 #include "Position.hpp"
 
 namespace sudoku
@@ -17,15 +17,16 @@ public:
     void RemovePossibility(Value const& value);
 
     void SetValue(Value const& value);
-
     std::optional<Value> GetValue() const;
+
+    Possibilities GetPossibilities() const;
 
     Position const& GetPosition() const;
 
     bool operator==(Cell const& cell) const;
 
 private:
-    PossibleValues m_Possibilities;
+    Possibilities m_Possibilities;
     mutable std::shared_timed_mutex m_PossibilitiesMutex;
 
     const Position m_Position;

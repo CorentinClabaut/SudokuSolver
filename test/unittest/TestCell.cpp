@@ -30,6 +30,16 @@ void GetValueUntilFound(Cell const& cell)
     }
 }
 
+void GetPossibilitiesUntilFound(Cell const& cell)
+{
+   Possibilities possibilities {};
+
+    while(possibilities.size() != 1)
+    {
+        possibilities = cell.GetPossibilities();
+    }
+}
+
 class TestCell : public ::testing::Test
 {
 public:
@@ -67,6 +77,21 @@ TEST_F(TestCell, SetValue)
 
     EXPECT_THAT(value, Ne(std::nullopt));
     EXPECT_THAT(*value, Eq(expectedValue));
+}
+
+TEST_F(TestCell, GetPossibilities)
+{
+    Cell cell(Position{1, 2}, 4);
+
+    auto possibilities = cell.GetPossibilities();
+
+    EXPECT_THAT(possibilities, Eq(Possibilities{1, 2, 3, 4}));
+
+    cell.RemovePossibility(2);
+
+    possibilities = cell.GetPossibilities();
+
+    EXPECT_THAT(possibilities, Eq(Possibilities{1, 3, 4}));
 }
 
 TEST_F(TestCell, SetSameValueTwice)
@@ -140,6 +165,7 @@ TEST_F(TestCell, SeveralThreadsReadAndWriteOnCell)
         Cell cell(Position{1, 2}, 9);
 
         std::thread reader1(GetValueUntilFound, std::cref(cell));
+        std::thread reader2(GetPossibilitiesUntilFound, std::cref(cell));
 
         std::thread writter1(RemoveAllCellPossibilitiesBut, std::ref(cell), std::unordered_set<Value>{expectedValue});
         std::thread writter2(RemoveAllCellPossibilitiesBut, std::ref(cell), std::unordered_set<Value>{expectedValue});
@@ -150,6 +176,7 @@ TEST_F(TestCell, SeveralThreadsReadAndWriteOnCell)
         writter2.join();
 
         reader1.join();
+        reader2.join();
 
         auto value = cell.GetValue();
 
