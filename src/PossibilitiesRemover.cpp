@@ -7,7 +7,7 @@
 #include "Grid.hpp"
 #include "Cell.hpp"
 #include "RelatedCellsGetter.hpp"
-#include "FoundCellsEnqueuer.hpp"
+#include "FoundCells.hpp"
 
 using namespace sudoku;
 
@@ -27,7 +27,7 @@ PossibilitiesRemoverImpl::PossibilitiesRemoverImpl(std::unique_ptr<RelatedCellsG
     m_RelatedCellsGetter(std::move(relatedCellsGetter))
 {}
 
-void PossibilitiesRemoverImpl::UpdateGrid(Cell const& newFoundCell, Grid& grid, FoundCellsEnqueuer& foundCellsEnqueuer) const
+void PossibilitiesRemoverImpl::UpdateGrid(Cell const& newFoundCell, Grid& grid, FoundCells& foundCells) const
 {
     auto foundValue = newFoundCell.GetValue();
 
@@ -45,5 +45,5 @@ void PossibilitiesRemoverImpl::UpdateGrid(Cell const& newFoundCell, Grid& grid, 
 
     boost::range::remove_erase_if(relatedCells, CellNotFound);
 
-    boost::for_each(relatedCells, [&](auto cell){ foundCellsEnqueuer.Enqueue(cell); });
+    boost::for_each(relatedCells, [&](auto cell){ foundCells.Enqueue(cell); });
 }

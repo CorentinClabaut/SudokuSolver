@@ -8,7 +8,7 @@ namespace sudoku
 {
 
 class UniquePossibilityFinder;
-class FoundCellsEnqueuer;
+struct FoundCells;
 struct Grid;
 
 class UniquePossibilitySetter
@@ -16,21 +16,19 @@ class UniquePossibilitySetter
 public:
     virtual ~UniquePossibilitySetter() = default;
 
-    virtual void SetCellsWithUniquePossibility(std::vector<SharedCell>& cells, Grid const& grid) = 0;
+    virtual void SetCellsWithUniquePossibility(std::vector<SharedCell>& cells, Grid const& grid, FoundCells& foundCells) const = 0;
 };
 
 class UniquePossibilitySetterImpl : public UniquePossibilitySetter
 {
 public:
     UniquePossibilitySetterImpl(
-            std::unique_ptr<UniquePossibilityFinder> uniquePossibilityFinder,
-            std::shared_ptr<FoundCellsEnqueuer> foundCellsEnqueuer);
+            std::unique_ptr<UniquePossibilityFinder> uniquePossibilityFinder);
 
-    void SetCellsWithUniquePossibility(std::vector<SharedCell>& cells, Grid const& grid) override;
+    void SetCellsWithUniquePossibility(std::vector<SharedCell>& cells, Grid const& grid, FoundCells& foundCells) const override;
 
 private:
     std::unique_ptr<UniquePossibilityFinder> m_UniquePossibilityFinder;
-    std::shared_ptr<FoundCellsEnqueuer> m_FoundCellsEnqueuer;
 };
 
 } /* namespace sudoku */

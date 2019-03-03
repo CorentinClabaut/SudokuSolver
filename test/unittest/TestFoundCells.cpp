@@ -1,4 +1,4 @@
-#include "FoundCellsEnqueuer.hpp"
+#include "FoundCells.hpp"
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -8,8 +8,6 @@
 
 #include <boost/range/irange.hpp>
 #include <boost/range/algorithm.hpp>
-
-#include "FoundCells.hpp"
 
 using testing::_;
 using testing::Eq;
@@ -23,11 +21,10 @@ namespace sudoku
 namespace test
 {
 
-class TestFoundCellsEnqueuer : public ::testing::Test
+class TestFoundCells : public ::testing::Test
 {
 public:
-    TestFoundCellsEnqueuer() :
-        m_FoundCellsEnqueuer(m_FoundCells)
+    TestFoundCells()
     {}
 
     std::vector<SharedCell> QueueToVector(std::queue<SharedCell>& queue)
@@ -48,27 +45,25 @@ public:
         return [=]{
                 for([[gnu::unused]] int i : boost::irange(0, times))
                 {
-                    m_FoundCellsEnqueuer.Enqueue(cell);
+                    m_FoundCells.Enqueue(cell);
                 }
             };
     }
 
-    std::shared_ptr<FoundCells> m_FoundCells = std::make_shared<FoundCells>();
-
-    FoundCellsEnqueuerImpl m_FoundCellsEnqueuer;
+    FoundCells m_FoundCells;
 };
 
-TEST_F(TestFoundCellsEnqueuer, Enqueue)
+TEST_F(TestFoundCells, Enqueue)
 {
     SharedCell cell = std::make_shared<Cell>(Position{0, 0}, 4);
 
-    m_FoundCellsEnqueuer.Enqueue(cell);
+    m_FoundCells.Enqueue(cell);
 
-    EXPECT_THAT(m_FoundCells->m_Queue.size(), Eq(1));
-    EXPECT_THAT(m_FoundCells->m_Queue.front(), Eq(cell));
+    EXPECT_THAT(m_FoundCells.m_Queue.size(), Eq(1));
+    EXPECT_THAT(m_FoundCells.m_Queue.front(), Eq(cell));
 }
 
-TEST_F(TestFoundCellsEnqueuer, SeveralThreadsEnqueue)
+TEST_F(TestFoundCells, SeveralThreadsEnqueue)
 {
     std::vector<SharedCell> cells = {
         std::make_shared<Cell>(Position{0, 0}, 1),
@@ -88,7 +83,7 @@ TEST_F(TestFoundCellsEnqueuer, SeveralThreadsEnqueue)
 
         boost::range::for_each(threads, [](auto& thread){ thread.join(); });
 
-        auto pushedCells = QueueToVector(m_FoundCells->m_Queue);
+        auto pushedCells = QueueToVector(m_FoundCells.m_Queue);
 
         boost::range::for_each(cells, [&](auto cell){ EXPECT_THAT(boost::range::count(pushedCells, cell), Eq(cellsToAddPerThreadCount)); });
     }

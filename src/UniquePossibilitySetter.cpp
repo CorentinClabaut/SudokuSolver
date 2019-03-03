@@ -1,22 +1,23 @@
 #include "UniquePossibilitySetter.hpp"
 
 #include "UniquePossibilityFinder.hpp"
-#include "FoundCellsEnqueuer.hpp"
+#include "FoundCells.hpp"
 #include "Grid.hpp"
 
 using namespace sudoku;
 
 UniquePossibilitySetterImpl::UniquePossibilitySetterImpl(
-        std::unique_ptr<UniquePossibilityFinder> uniquePossibilityFinder,
-        std::shared_ptr<FoundCellsEnqueuer> foundCellsEnqueuer) :
-    m_UniquePossibilityFinder(std::move(uniquePossibilityFinder)),
-    m_FoundCellsEnqueuer(foundCellsEnqueuer)
+        std::unique_ptr<UniquePossibilityFinder> uniquePossibilityFinder) :
+    m_UniquePossibilityFinder(std::move(uniquePossibilityFinder))
 {}
 
-void UniquePossibilitySetterImpl::SetCellsWithUniquePossibility(std::vector<SharedCell>& cells, Grid const& grid)
+void UniquePossibilitySetterImpl::SetCellsWithUniquePossibility(std::vector<SharedCell>& cells, Grid const& grid, FoundCells& foundCells) const
 {
-    for (auto& cell : cells)
+    for (auto cell : cells)
     {
+        if (cell->GetValue().has_value())
+            continue;
+
         auto uniquePossibility = m_UniquePossibilityFinder->FindUniquePossibility(cell->GetPosition(), grid);
 
         if (!uniquePossibility)
@@ -24,6 +25,6 @@ void UniquePossibilitySetterImpl::SetCellsWithUniquePossibility(std::vector<Shar
 
         cell->SetValue(*uniquePossibility);
 
-        m_FoundCellsEnqueuer->Enqueue(cell);
+        foundCells.Enqueue(cell);
     }
 }
