@@ -28,7 +28,7 @@ std::unique_ptr<GridSolver> GridSolverFactory::Make(int parallelThreadsCount)
                     )
                 ),
                 std::make_unique<GridStatusGetterImpl>(
-                    std::unique_ptr<RelatedCellsGetterImpl>()
+                    std::make_unique<RelatedCellsGetterImpl>()
                 )
             );
 }
