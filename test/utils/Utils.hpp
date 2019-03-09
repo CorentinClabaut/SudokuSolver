@@ -78,7 +78,6 @@ inline Grid Create4x4IncorrectlySolvedGrid()
     return grid;
 }
 
-
 inline PositionsValues CreatePositionsValues9x9()
 {
     return {

@@ -2,6 +2,15 @@ cmake_minimum_required (VERSION 3.8.2)
 
 project (Sudoku)
 
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
+set(CMAKE_CXX_FLAGS_DEBUG "-g")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Werror")
 set(CMAKE_CXX_COMPILER /usr/bin/g++-7)
 set(CMAKE_CXX_STANDARD 17)
@@ -26,13 +35,14 @@ target_link_libraries(sudoku_lib
 
 # Executable
 
-add_executable(player
+add_executable(sudoku_solver
     ${SRCS}
 )
 
-target_link_libraries(player
+target_link_libraries(sudoku_solver
     sudoku_lib
     pthread
+    profiler
 )
 
 # Test

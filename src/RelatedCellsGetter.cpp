@@ -16,35 +16,23 @@ int RoundDown(int value, int multiplier)
     return (value / multiplier) * multiplier;
 }
 
-std::vector<int> CreateIncrementingVector(int firstValue, int length)
-{
-    std::vector<int> vec(length);
-
-    boost::iota(vec, firstValue);
-
-    return vec;
-}
-
-std::vector<Position> GetAllPositions(std::vector<int> const& rows, std::vector<int> const& cols)
+std::vector<Position> GetAllPositionsButSelectedOne(int begRow, int rows, int begCol, int cols, Position const& selectedPosition)
 {
     std::vector<Position> positions;
+    positions.reserve(rows * cols);
 
-    for(auto row : rows)
+    for(auto row : boost::irange(begRow, begRow + rows))
     {
-        for(auto col : cols)
+        for(auto col : boost::irange(begCol, begCol + cols))
         {
-            positions.push_back({row, col});
+            Position pos {row, col};
+
+            if (pos == selectedPosition)
+                continue;
+
+            positions.push_back(std::move(pos));
         }
     }
-
-    return positions;
-}
-
-std::vector<Position> GetAllPositionsButSelectedOne(std::vector<int> const& rows, std::vector<int> const& cols, Position const& selectedPosition)
-{
-    auto positions = GetAllPositions(rows, cols);
-
-    boost::remove_erase(positions, selectedPosition);
 
     return positions;
 }
@@ -58,34 +46,26 @@ CellsGroup GetCells(std::vector<Position> const& positions, Grid const& grid)
 
 std::vector<Position> GetRelatedHorizontalPositions(Position const& selectedPosition, int gridSize)
 {
-    std::vector<int> rows {selectedPosition.m_Row};
-    std::vector<int> cols = CreateIncrementingVector(0, gridSize);
-
-    return GetAllPositionsButSelectedOne(rows, cols, selectedPosition);
+    return GetAllPositionsButSelectedOne(selectedPosition.m_Row, 1, 0, gridSize, selectedPosition);
 }
 
 std::vector<Position> GetRelatedVerticalPositions(Position const& selectedPosition, int gridSize)
 {
-    std::vector<int> rows = CreateIncrementingVector(0, gridSize);
-    std::vector<int> cols {selectedPosition.m_Col};
-
-    return GetAllPositionsButSelectedOne(rows, cols, selectedPosition);
+    return GetAllPositionsButSelectedOne(0, gridSize, selectedPosition.m_Col, 1, selectedPosition);
 }
 
 std::vector<Position> GetRelatedBlockPositions(Position const& selectedPosition, int blockSize)
 {
     auto beginRow = RoundDown(selectedPosition.m_Row, blockSize);
-    auto rows = CreateIncrementingVector(beginRow, blockSize);
-
     auto beginCol = RoundDown(selectedPosition.m_Col, blockSize);
-    std::vector<int> cols = CreateIncrementingVector(beginCol, blockSize);
 
-    return GetAllPositionsButSelectedOne(rows, cols, selectedPosition);
+    return GetAllPositionsButSelectedOne(beginRow, blockSize, beginCol, blockSize, selectedPosition);
 }
 
 std::vector<Position> GetAllRelatedPositions(Position const& selectedPosition, int gridSize, int blockSize)
 {
     std::vector<Position> positions;
+    positions.reserve(gridSize * 3);
 
     boost::range::push_back(positions, GetRelatedHorizontalPositions(selectedPosition, gridSize));
     boost::range::push_back(positions, GetRelatedVerticalPositions(selectedPosition, gridSize));
