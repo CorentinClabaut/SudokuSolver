@@ -9,6 +9,18 @@ Cell::Cell(Position position, int gridSize) :
     m_Position(std::move(position))
 {}
 
+Cell::Cell(Cell const& cell) :
+    m_Possibilities(cell.m_Possibilities),
+    m_Position(cell.m_Position)
+{}
+
+Cell& Cell::operator=(Cell const& cell)
+{
+    m_Possibilities = cell.m_Possibilities;
+
+    return *this;
+}
+
 void Cell::RemovePossibility(Value const& value)
 {
     std::unique_lock<std::shared_timed_mutex> writeLock(m_PossibilitiesMutex);

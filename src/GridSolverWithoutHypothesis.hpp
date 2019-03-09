@@ -12,27 +12,25 @@ struct FoundCells;
 struct Grid;
 enum class GridStatus;
 
-class GridSolver
+class GridSolverWithoutHypothesis
 {
 public:
-    virtual ~GridSolver() = default;
+    virtual ~GridSolverWithoutHypothesis() = default;
 
-    virtual GridStatus Solve(Grid& grid) const = 0;
+    virtual GridStatus Solve(Grid& grid, FoundCells& foundCells) const = 0;
 };
 
-class GridSolverImpl : public GridSolver
+class GridSolverWithoutHypothesisImpl : public GridSolverWithoutHypothesis
 {
 public:
-    GridSolverImpl(
+    GridSolverWithoutHypothesisImpl(
             std::unique_ptr<ParallelPossibilitiesRemover> parallelPossibilitiesRemover,
             std::unique_ptr<ParallelUniquePossibilitySetter> parallelUniquePossibilitySetter,
             std::unique_ptr<GridStatusGetter> gridStatusGetter);
 
-    GridStatus Solve(Grid& grid) const override;
+    GridStatus Solve(Grid& grid, FoundCells& foundCells) const override;
 
 private:
-    void GetFoundCells(Grid const& grid, FoundCells& foundCells) const;
-
     std::unique_ptr<ParallelPossibilitiesRemover> m_ParallelPossibilitiesRemover;
     std::unique_ptr<ParallelUniquePossibilitySetter> m_ParallelUniquePossibilitySetter;
     std::unique_ptr<GridStatusGetter> m_GridStatusGetter;

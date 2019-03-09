@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GridSolver.hpp"
+#include "GridSolverWithHypothesis.hpp"
 
 namespace sudoku
 {

@@ -73,6 +73,38 @@ Grid::Grid(int gridSize) :
     }
 }
 
+Grid::Grid(Grid const& grid) :
+    m_Cells(boost::extents[grid.m_GridSize][grid.m_GridSize]),
+    m_GridSize(grid.m_GridSize),
+    m_BlockSize(grid.m_BlockSize)
+{
+    for(auto row : boost::irange(0, grid.m_GridSize))
+    {
+        for(auto col : boost::irange(0, grid.m_GridSize))
+        {
+            m_Cells[row][col] = std::make_shared<Cell>(*grid.m_Cells[row][col]);
+        }
+    }
+}
+
+Grid& Grid::operator=(Grid const& grid)
+{
+    for(auto row : boost::irange(0, grid.m_GridSize))
+    {
+        for(auto col : boost::irange(0, grid.m_GridSize))
+        {
+            *m_Cells[row][col] = *grid.m_Cells[row][col];
+        }
+    }
+
+    return *this;
+}
+
+SharedCell Grid::GetCell(Position const& position)
+{
+    return m_Cells[position.m_Row][position.m_Col];
+}
+
 std::ostream& operator<<(std::ostream& os, Grid const& grid)
 {
     for(auto row : boost::irange(0, grid.m_GridSize))

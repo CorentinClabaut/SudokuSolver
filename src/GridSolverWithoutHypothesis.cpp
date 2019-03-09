@@ -1,4 +1,4 @@
-#include "GridSolver.hpp"
+#include "GridSolverWithoutHypothesis.hpp"
 
 #include "ParallelPossibilitiesRemover.hpp"
 #include "ParallelUniquePossibilitySetter.hpp"
@@ -9,7 +9,7 @@
 
 using namespace sudoku;
 
-GridSolverImpl::GridSolverImpl(
+GridSolverWithoutHypothesisImpl::GridSolverWithoutHypothesisImpl(
         std::unique_ptr<ParallelPossibilitiesRemover> parallelPossibilitiesRemover,
         std::unique_ptr<ParallelUniquePossibilitySetter> parallelUniquePossibilitySetter,
         std::unique_ptr<GridStatusGetter> gridStatusGetter) :
@@ -18,11 +18,8 @@ GridSolverImpl::GridSolverImpl(
     m_GridStatusGetter(std::move(gridStatusGetter))
 {}
 
-GridStatus GridSolverImpl::Solve(Grid& grid) const
+GridStatus GridSolverWithoutHypothesisImpl::Solve(Grid& grid, FoundCells& foundCells) const
 {
-    FoundCells foundCells;
-    GetFoundCells(grid, foundCells);
-
     while(!foundCells.m_Queue.empty())
     {
         if (auto gridStatus = m_GridStatusGetter->GetStatus(grid);
@@ -40,19 +37,7 @@ GridStatus GridSolverImpl::Solve(Grid& grid) const
         }
 
         m_ParallelUniquePossibilitySetter->SetCellsWithUniquePossibility(grid, foundCells);
-
     }
 
     return GridStatus::Incomplete;
-}
-
-void GridSolverImpl::GetFoundCells(Grid const& grid, FoundCells& foundCells) const
-{
-    for (auto cell : grid)
-    {
-        auto value = cell->GetValue();
-
-        if (value)
-            foundCells.m_Queue.push(cell);
-    }
 }

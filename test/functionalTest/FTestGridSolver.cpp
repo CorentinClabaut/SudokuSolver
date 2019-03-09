@@ -5,6 +5,8 @@
 #include "GridStatus.hpp"
 #include "Grid.hpp"
 #include "utils/Utils.hpp"
+#include "GridStatusGetter.hpp"
+#include "RelatedCellsGetter.hpp"
 
 using testing::Eq;
 using testing::Ne;
@@ -17,8 +19,11 @@ namespace test
 class FTestGridSolver : public ::testing::Test
 {
 public:
-    FTestGridSolver()
+    FTestGridSolver() :
+        m_GridStatusGetter(std::make_unique<RelatedCellsGetterImpl>())
     {}
+
+    GridStatusGetterImpl m_GridStatusGetter;
 };
 
 TEST_F(FTestGridSolver, Solve4x4)
@@ -27,7 +32,6 @@ TEST_F(FTestGridSolver, Solve4x4)
     const int cellsKept {8};
 
     const auto positionsValues = CreatePositionsValues4x4();
-    const auto expectedGrid = CreateGrid(gridSize, positionsValues);
 
     const int testExecutionCount = 50;
     for(int testId : boost::irange(1, testExecutionCount + 1))
@@ -39,14 +43,11 @@ TEST_F(FTestGridSolver, Solve4x4)
 
         try
         {
-            const auto gridStatus = gridSolver->Solve(grid);
+            const auto solvedCorrectly = gridSolver->Solve(grid);
+            EXPECT_TRUE(solvedCorrectly);
 
-            //TODO [hypothesis]: check EXPECT_THAT(gridStatus, Eq(GridStatus::SolvedCorrectly));
-            EXPECT_THAT(gridStatus, Ne(GridStatus::Wrong));
-            if (gridStatus != GridStatus::Incomplete)
-            {
-                EXPECT_THAT(grid, Eq(expectedGrid));
-            }
+            auto gridStatus = m_GridStatusGetter.GetStatus(grid);
+            EXPECT_THAT(gridStatus, Eq(GridStatus::SolvedCorrectly));
         }
         catch(std::exception& e)
         {
@@ -61,7 +62,6 @@ TEST_F(FTestGridSolver, Solve9x9)
     const int cellsKept {40};
 
     const auto positionsValues = CreatePositionsValues9x9();
-    const auto expectedGrid = CreateGrid(gridSize, positionsValues);
 
     const int testExecutionCount = 50;
     for(int testId : boost::irange(1, testExecutionCount + 1))
@@ -73,14 +73,11 @@ TEST_F(FTestGridSolver, Solve9x9)
 
         try
         {
-            const auto gridStatus = gridSolver->Solve(grid);
+            const auto solvedCorrectly = gridSolver->Solve(grid);
+            EXPECT_TRUE(solvedCorrectly);
 
-            //TODO [hypothesis]: check EXPECT_THAT(gridStatus, Eq(GridStatus::SolvedCorrectly));
-            EXPECT_THAT(gridStatus, Ne(GridStatus::Wrong));
-            if (gridStatus != GridStatus::Incomplete)
-            {
-                EXPECT_THAT(grid, Eq(expectedGrid));
-            }
+            auto gridStatus = m_GridStatusGetter.GetStatus(grid);
+            EXPECT_THAT(gridStatus, Eq(GridStatus::SolvedCorrectly));
         }
         catch(std::exception& e)
         {

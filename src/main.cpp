@@ -38,10 +38,10 @@ int main ()
         try
         {
             const auto beg = std::chrono::high_resolution_clock::now();
-            const auto gridStatus = gridSolver->Solve(grid);
+            const auto solvedCorrectly = gridSolver->Solve(grid);
             const auto end = std::chrono::high_resolution_clock::now();
 
-            if (gridStatus != GridStatus::SolvedCorrectly)
+            if (solvedCorrectly)
             {
                 auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - beg).count();
                 durations.push_back(duration);

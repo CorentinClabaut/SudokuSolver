@@ -30,17 +30,17 @@ public:
 
     void ExpectCellHasUniquePossibility(SharedCell cell, Grid const& grid, Value uniqueValue)
     {
-        EXPECT_CALL(*m_UniquePossibilityFinder, FindUniquePossibility(cell->GetPosition(), grid)).WillOnce(Return(uniqueValue));
+        EXPECT_CALL(*m_UniquePossibilityFinder, FindUniquePossibility(cell->GetPosition(), Ref(grid))).WillOnce(Return(uniqueValue));
     }
 
     void ExpectCellHasNoUniquePossibility(SharedCell cell, Grid const& grid)
     {
-        EXPECT_CALL(*m_UniquePossibilityFinder, FindUniquePossibility(cell->GetPosition(), grid)).WillOnce(Return(std::nullopt));
+        EXPECT_CALL(*m_UniquePossibilityFinder, FindUniquePossibility(cell->GetPosition(), Ref(grid))).WillOnce(Return(std::nullopt));
     }
 
     void DontTryFindingUniquePossibility(SharedCell cell, Grid const& grid)
     {
-        EXPECT_CALL(*m_UniquePossibilityFinder, FindUniquePossibility(cell->GetPosition(), grid)).Times(0);
+        EXPECT_CALL(*m_UniquePossibilityFinder, FindUniquePossibility(cell->GetPosition(), Ref(grid))).Times(0);
     }
 
     void ExpectCellSetTo(SharedCell cell, Value expectedValue)

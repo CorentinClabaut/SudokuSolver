@@ -1,4 +1,4 @@
-#include "GridSolver.hpp"
+#include "GridSolverWithoutHypothesis.hpp"
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -25,15 +25,15 @@ namespace sudoku
 namespace test
 {
 
-class TestGridSolver : public ::testing::Test
+class TestGridSolverWithoutHypothesis : public ::testing::Test
 {
 public:
-    TestGridSolver()
+    TestGridSolverWithoutHypothesis()
     {}
 
-    std::unique_ptr<GridSolver> MakeGridSolver()
+    std::unique_ptr<GridSolverWithoutHypothesis> MakeGridSolverWithoutHypothesis()
     {
-        return std::make_unique<GridSolverImpl>(
+        return std::make_unique<GridSolverWithoutHypothesisImpl>(
                     std::move(m_ParallelPossibilitiesRemover),
                     std::move(m_ParallelUniquePossibilitySetter),
                     std::move(m_GridStatusGetter));
@@ -46,7 +46,8 @@ public:
 
     void ExpectUpdateGrid(Grid& grid)
     {
-        EXPECT_CALL(*m_ParallelPossibilitiesRemover, UpdateGrid(_, Ref(grid))).Times(1);
+        EXPECT_CALL(*m_ParallelPossibilitiesRemover, UpdateGrid(_, Ref(grid)))
+                .WillOnce(Invoke([](FoundCells& foundCells, Grid&){ while(!foundCells.m_Queue.empty()) { foundCells.m_Queue.pop();} }));
     }
 
     void ExpectSetCellsWithUniquePossibility_FoundCells(Grid& grid, SharedCell newFoundCell)
@@ -57,50 +58,54 @@ public:
 
     void ExpectSetCellsWithUniquePossibility_NoCellFound(Grid& grid)
     {
-        EXPECT_CALL(*m_ParallelUniquePossibilitySetter, SetCellsWithUniquePossibility(Ref(grid), _))
-                .WillOnce(Invoke([](Grid&, FoundCells& foundCells){ while(!foundCells.m_Queue.empty()) { foundCells.m_Queue.pop();} }));
+        EXPECT_CALL(*m_ParallelUniquePossibilitySetter, SetCellsWithUniquePossibility(Ref(grid), _)).Times(1);
     }
+
+    FoundCells m_FoundCells;
 
     std::unique_ptr<MockParallelPossibilitiesRemover> m_ParallelPossibilitiesRemover = std::make_unique<StrictMock<MockParallelPossibilitiesRemover>>();
     std::unique_ptr<MockParallelUniquePossibilitySetter> m_ParallelUniquePossibilitySetter = std::make_unique<StrictMock<MockParallelUniquePossibilitySetter>>();
     std::unique_ptr<MockGridStatusGetter> m_GridStatusGetter = std::make_unique<StrictMock<MockGridStatusGetter>>();
 };
 
-TEST_F(TestGridSolver, EmptyGridIn)
+TEST_F(TestGridSolverWithoutHypothesis, EmptyGridIn)
 {
     const int gridSize {4};
     Grid grid {gridSize};
 
-    auto gridStatus = MakeGridSolver()->Solve(grid);
+    auto gridStatus = MakeGridSolverWithoutHypothesis()->Solve(grid, m_FoundCells);
 
     EXPECT_THAT(gridStatus, Eq(GridStatus::Incomplete));
 }
 
-TEST_F(TestGridSolver, CorrectlySolvedGridIn)
+TEST_F(TestGridSolverWithoutHypothesis, CorrectlySolvedGridIn)
 {
     Grid grid = Create4x4CorrectlySolvedGrid();
+    m_FoundCells.m_Queue.push(grid.m_Cells[0][0]);
 
     ExpectGridStatus(grid, GridStatus::SolvedCorrectly);
 
-    auto gridStatus = MakeGridSolver()->Solve(grid);
+    auto gridStatus = MakeGridSolverWithoutHypothesis()->Solve(grid, m_FoundCells);
 
     EXPECT_THAT(gridStatus, Eq(GridStatus::SolvedCorrectly));
 }
 
-TEST_F(TestGridSolver, IncorrectlySolvedGridIn)
+TEST_F(TestGridSolverWithoutHypothesis, IncorrectlySolvedGridIn)
 {
     Grid grid = Create4x4IncorrectlySolvedGrid();
+    m_FoundCells.m_Queue.push(grid.m_Cells[0][0]);
 
     ExpectGridStatus(grid, GridStatus::Wrong);
 
-    auto gridStatus = MakeGridSolver()->Solve(grid);
+    auto gridStatus = MakeGridSolverWithoutHypothesis()->Solve(grid, m_FoundCells);
 
     EXPECT_THAT(gridStatus, Eq(GridStatus::Wrong));
 }
 
-TEST_F(TestGridSolver, CorrectlySolvedAfterUpdateGrid)
+TEST_F(TestGridSolverWithoutHypothesis, CorrectlySolvedAfterUpdateGrid)
 {
     Grid grid = Create4x4CorrectlyPartiallyFilledGrid();
+    m_FoundCells.m_Queue.push(grid.m_Cells[0][0]);
 
     {
     InSequence s;
@@ -109,14 +114,15 @@ TEST_F(TestGridSolver, CorrectlySolvedAfterUpdateGrid)
     ExpectGridStatus(grid, GridStatus::SolvedCorrectly);
     }
 
-    auto gridStatus = MakeGridSolver()->Solve(grid);
+    auto gridStatus = MakeGridSolverWithoutHypothesis()->Solve(grid, m_FoundCells);
 
     EXPECT_THAT(gridStatus, Eq(GridStatus::SolvedCorrectly));
 }
 
-TEST_F(TestGridSolver, IncorrectlySolvedAfterUpdateGrid)
+TEST_F(TestGridSolverWithoutHypothesis, IncorrectlySolvedAfterUpdateGrid)
 {
     Grid grid = Create4x4CorrectlyPartiallyFilledGrid();
+    m_FoundCells.m_Queue.push(grid.m_Cells[0][0]);
 
     {
     InSequence s;
@@ -125,14 +131,15 @@ TEST_F(TestGridSolver, IncorrectlySolvedAfterUpdateGrid)
     ExpectGridStatus(grid, GridStatus::Wrong);
     }
 
-    auto gridStatus = MakeGridSolver()->Solve(grid);
+    auto gridStatus = MakeGridSolverWithoutHypothesis()->Solve(grid, m_FoundCells);
 
     EXPECT_THAT(gridStatus, Eq(GridStatus::Wrong));
 }
 
-TEST_F(TestGridSolver, CorrectlySolvedAfterSetCellsWithUniquePossibility)
+TEST_F(TestGridSolverWithoutHypothesis, CorrectlySolvedAfterSetCellsWithUniquePossibility)
 {
     Grid grid = Create4x4CorrectlyPartiallyFilledGrid();
+    m_FoundCells.m_Queue.push(grid.m_Cells[0][0]);
 
     {
     InSequence s;
@@ -143,14 +150,15 @@ TEST_F(TestGridSolver, CorrectlySolvedAfterSetCellsWithUniquePossibility)
     ExpectGridStatus(grid, GridStatus::SolvedCorrectly);
     }
 
-    auto gridStatus = MakeGridSolver()->Solve(grid);
+    auto gridStatus = MakeGridSolverWithoutHypothesis()->Solve(grid, m_FoundCells);
 
     EXPECT_THAT(gridStatus, Eq(GridStatus::SolvedCorrectly));
 }
 
-TEST_F(TestGridSolver, IncorrectlySolvedAfterSetCellsWithUniquePossibility)
+TEST_F(TestGridSolverWithoutHypothesis, IncorrectlySolvedAfterSetCellsWithUniquePossibility)
 {
     Grid grid = Create4x4CorrectlyPartiallyFilledGrid();
+    m_FoundCells.m_Queue.push(grid.m_Cells[0][0]);
 
     {
     InSequence s;
@@ -161,14 +169,15 @@ TEST_F(TestGridSolver, IncorrectlySolvedAfterSetCellsWithUniquePossibility)
     ExpectGridStatus(grid, GridStatus::Wrong);
     }
 
-    auto gridStatus = MakeGridSolver()->Solve(grid);
+    auto gridStatus = MakeGridSolverWithoutHypothesis()->Solve(grid, m_FoundCells);
 
     EXPECT_THAT(gridStatus, Eq(GridStatus::Wrong));
 }
 
-TEST_F(TestGridSolver, CantCompleteGrid)
+TEST_F(TestGridSolverWithoutHypothesis, CantCompleteGrid)
 {
     Grid grid = Create4x4CorrectlyPartiallyFilledGrid();
+    m_FoundCells.m_Queue.push(grid.m_Cells[0][0]);
 
     {
     InSequence s;
@@ -178,7 +187,7 @@ TEST_F(TestGridSolver, CantCompleteGrid)
     ExpectSetCellsWithUniquePossibility_NoCellFound(grid);
     }
 
-    auto gridStatus = MakeGridSolver()->Solve(grid);
+    auto gridStatus = MakeGridSolverWithoutHypothesis()->Solve(grid, m_FoundCells);
 
     EXPECT_THAT(gridStatus, Eq(GridStatus::Incomplete));
 }

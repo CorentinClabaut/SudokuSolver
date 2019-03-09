@@ -13,6 +13,9 @@ class Cell
 {
 public:
     Cell(Position position, int gridSize);
+    Cell(Cell const& cell);
+
+    Cell& operator=(Cell const& cell);
 
     void RemovePossibility(Value const& value);
 
