@@ -20,24 +20,34 @@ GridSolverWithoutHypothesisImpl::GridSolverWithoutHypothesisImpl(
 
 GridStatus GridSolverWithoutHypothesisImpl::Solve(Grid& grid, FoundCells& foundCells) const
 {
-    while(!foundCells.m_Queue.empty())
+    if (foundCells.m_Queue.empty())
+        throw std::runtime_error("Can't solve without hypothesis if no cell has been found");
+
+    try
     {
-        if (auto gridStatus = m_GridStatusGetter->GetStatus(grid);
-            gridStatus == GridStatus::SolvedCorrectly || gridStatus == GridStatus::Wrong)
+        while(!foundCells.m_Queue.empty())
         {
-            return gridStatus;
+            if (auto gridStatus = m_GridStatusGetter->GetStatus(grid);
+                gridStatus == GridStatus::SolvedCorrectly || gridStatus == GridStatus::Wrong)
+            {
+                return gridStatus;
+            }
+
+            m_ParallelPossibilitiesRemover->UpdateGrid(foundCells, grid);
+
+            if (auto gridStatus = m_GridStatusGetter->GetStatus(grid);
+                gridStatus == GridStatus::SolvedCorrectly || gridStatus == GridStatus::Wrong)
+            {
+                return gridStatus;
+            }
+
+            m_ParallelUniquePossibilitySetter->SetCellsWithUniquePossibility(grid, foundCells);
         }
 
-        m_ParallelPossibilitiesRemover->UpdateGrid(foundCells, grid);
-
-        if (auto gridStatus = m_GridStatusGetter->GetStatus(grid);
-            gridStatus == GridStatus::SolvedCorrectly || gridStatus == GridStatus::Wrong)
-        {
-            return gridStatus;
-        }
-
-        m_ParallelUniquePossibilitySetter->SetCellsWithUniquePossibility(grid, foundCells);
+        return GridStatus::Incomplete;
     }
-
-    return GridStatus::Incomplete;
+    catch(std::exception const& e)
+    {
+        return GridStatus::Wrong;
+    }
 }

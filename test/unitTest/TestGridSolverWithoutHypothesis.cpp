@@ -68,14 +68,12 @@ public:
     std::unique_ptr<MockGridStatusGetter> m_GridStatusGetter = std::make_unique<StrictMock<MockGridStatusGetter>>();
 };
 
-TEST_F(TestGridSolverWithoutHypothesis, EmptyGridIn)
+TEST_F(TestGridSolverWithoutHypothesis, EmptyFoundCellsInThrow)
 {
     const int gridSize {4};
     Grid grid {gridSize};
 
-    auto gridStatus = MakeGridSolverWithoutHypothesis()->Solve(grid, m_FoundCells);
-
-    EXPECT_THAT(gridStatus, Eq(GridStatus::Incomplete));
+    EXPECT_THROW(MakeGridSolverWithoutHypothesis()->Solve(grid, m_FoundCells), std::exception);
 }
 
 TEST_F(TestGridSolverWithoutHypothesis, CorrectlySolvedGridIn)

@@ -42,6 +42,9 @@ Position SelectBestPositionForHypothesis(Grid const& grid)
         }
     }
 
+    if (minimumNumberPossibilities == std::numeric_limits<size_t>::max())
+        throw std::runtime_error("Can't find best position for hyposesis in completed grid.");
+
     return bestPosition;
 }
 

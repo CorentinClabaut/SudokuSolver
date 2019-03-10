@@ -134,5 +134,35 @@ TEST_F(TestParallelPossibilitiesRemover, NewCellsFoundByThreadProcessedByOtherTh
     }
 }
 
+TEST_F(TestParallelPossibilitiesRemover, AllThreadsStopCorrectlyIfOneThreadStopAfterCatchingAnException)
+{
+    const int parallelThreadsCount {4};
+
+    m_FoundCells->m_Queue.push(m_Grid.m_Cells[0][0]);
+    m_FoundCells->m_Queue.push(m_Grid.m_Cells[0][1]);
+    m_FoundCells->m_Queue.push(m_Grid.m_Cells[0][2]);
+    m_FoundCells->m_Queue.push(m_Grid.m_Cells[0][3]);
+
+    EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[0][0]), Ref(m_Grid), Ref(*m_FoundCells)))
+            .WillOnce(Invoke([](Cell const&, Grid&, FoundCells&){ std::this_thread::sleep_for(std::chrono::milliseconds((rand() % 10) + 1)); }));
+
+    EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[0][1]), Ref(m_Grid), Ref(*m_FoundCells)))
+            .WillOnce(Invoke([](Cell const&, Grid&, FoundCells&)
+                {
+                    std::this_thread::sleep_for(std::chrono::milliseconds((rand() % 10) + 1));
+                    throw std::runtime_error("error");
+                }));
+
+    EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[0][2]), Ref(m_Grid), Ref(*m_FoundCells)))
+            .WillOnce(Invoke([](Cell const&, Grid&, FoundCells&){ std::this_thread::sleep_for(std::chrono::milliseconds((rand() % 10) + 1)); }));
+
+    EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[0][3]), Ref(m_Grid), Ref(*m_FoundCells)))
+            .WillOnce(Invoke([](Cell const&, Grid&, FoundCells&){ std::this_thread::sleep_for(std::chrono::milliseconds((rand() % 10) + 1)); }));
+
+    MakeParallelPossibilitiesRemover(parallelThreadsCount)->UpdateGrid(*m_FoundCells, m_Grid);
+
+    EXPECT_TRUE(m_FoundCells->m_Queue.empty());
+}
+
 } /* namespace test */
 } /* namespace sudoku */

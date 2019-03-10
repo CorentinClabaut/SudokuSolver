@@ -1,6 +1,6 @@
 #include "ParallelPossibilitiesRemover.hpp"
 
-#include <thread>
+#include <future>
 #include <optional>
 
 #include <boost/range/algorithm.hpp>
@@ -22,16 +22,17 @@ void ParallelPossibilitiesRemoverImpl::UpdateGrid(FoundCells& foundCells, Grid& 
 {
     int threadsWorkingCount = 0;
 
-    std::vector<std::thread> threads(m_ParallelThreadsCount);
-    for (auto& thread : threads)
-        thread = std::thread([&]{ RemoveQueuedUnvalidPossibilities(foundCells, grid, threadsWorkingCount); });
+    std::atomic<bool> exception {false};
+    std::vector<std::future<void>> futures(m_ParallelThreadsCount);
+    for (auto& future : futures)
+        future = std::async([&]{ RemoveQueuedUnvalidPossibilities(foundCells, grid, threadsWorkingCount, exception); });
 
-    boost::for_each(threads, [](auto& t){ t.join(); });
+    boost::for_each(futures, [](auto& f){ f.get(); });
 }
 
-void ParallelPossibilitiesRemoverImpl::RemoveQueuedUnvalidPossibilities(FoundCells& foundCells, Grid& grid, int& threadsWorkingCount) const
+void ParallelPossibilitiesRemoverImpl::RemoveQueuedUnvalidPossibilities(FoundCells& foundCells, Grid& grid, int& threadsWorkingCount, std::atomic<bool>& exception) const
 {
-    while (true)
+    while (!exception)
     {
         std::optional<SharedCell> newFoundCell;
 
@@ -52,7 +53,14 @@ void ParallelPossibilitiesRemoverImpl::RemoveQueuedUnvalidPossibilities(FoundCel
 
         if (newFoundCell)
         {
-            m_PossibilitiesRemover->UpdateGrid(**newFoundCell, grid, foundCells);
+            try
+            {
+                m_PossibilitiesRemover->UpdateGrid(**newFoundCell, grid, foundCells);
+            }
+            catch(std::exception const& e)
+            {
+                exception = true;
+            }
 
             {
             std::lock_guard<std::mutex> l(foundCells.m_Mutex);

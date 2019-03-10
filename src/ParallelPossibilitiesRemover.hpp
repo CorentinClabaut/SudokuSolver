@@ -27,7 +27,7 @@ public:
     void UpdateGrid(FoundCells& foundCells, Grid& grid) const override;
 
 private:
-    void RemoveQueuedUnvalidPossibilities(FoundCells& foundCells, Grid& grid, int& threadsWorkingCount) const;
+    void RemoveQueuedUnvalidPossibilities(FoundCells& foundCells, Grid& grid, int& threadsWorkingCount, std::atomic<bool>& exception) const;
 
     const int m_ParallelThreadsCount;
 

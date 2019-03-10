@@ -1,6 +1,6 @@
 #include "ParallelUniquePossibilitySetter.hpp"
 
-#include <thread>
+#include <future>
 
 #include <boost/range/irange.hpp>
 #include <boost/range/algorithm.hpp>
@@ -58,10 +58,10 @@ void ParallelUniquePossibilitySetterImpl::SetCellsWithUniquePossibility(Grid& gr
 {
     auto threadsCells = GetThreadsCells(grid, m_ParallelThreadsCount);
 
-    std::vector<std::thread> threads(m_ParallelThreadsCount);
+    std::vector<std::future<void>> futures(m_ParallelThreadsCount);
 
     for (int threadId : boost::irange(0, m_ParallelThreadsCount))
-        threads[threadId] = std::thread([&, threadId]{ m_UniquePossibilitySetter->SetCellsWithUniquePossibility(threadsCells[threadId], grid, foundCells); });
+        futures[threadId] = std::async([&, threadId]{ m_UniquePossibilitySetter->SetCellsWithUniquePossibility(threadsCells[threadId], grid, foundCells); });
 
-    boost::for_each(threads, [](auto& t){ t.join(); });
+    boost::for_each(futures, [](auto& f){ f.get(); });
 }
