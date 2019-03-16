@@ -63,7 +63,7 @@ TEST_F(FTestGridSolver, Solve9x9)
 
     const auto positionsValues = CreatePositionsValues9x9();
 
-    const int testExecutionCount = 500;
+    const int testExecutionCount = 5000;
     for(int testId : boost::irange(1, testExecutionCount + 1))
     {
         const int parallelThreadsCount {testId % 5 + 1};

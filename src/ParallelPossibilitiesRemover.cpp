@@ -18,7 +18,7 @@ ParallelPossibilitiesRemoverImpl::ParallelPossibilitiesRemoverImpl(
     m_PossibilitiesRemover(std::move(possibilitiesRemover))
 {}
 
-bool ParallelPossibilitiesRemoverImpl::UpdateGrid(FoundCells& foundCells, Grid& grid) const
+void ParallelPossibilitiesRemoverImpl::UpdateGrid(FoundCells& foundCells, Grid& grid) const
 {
     int threadsWorkingCount = 0;
 
@@ -29,7 +29,8 @@ bool ParallelPossibilitiesRemoverImpl::UpdateGrid(FoundCells& foundCells, Grid& 
 
     boost::for_each(futures, [](auto& f){ f.get(); });
 
-    return !exception;
+    if (exception)
+        throw std::runtime_error("Thread throw exception while removing unvalid possibilities");
 }
 
 void ParallelPossibilitiesRemoverImpl::RemoveQueuedUnvalidPossibilities(FoundCells& foundCells, Grid& grid, int& threadsWorkingCount, std::atomic<bool>& exception) const
@@ -70,8 +71,4 @@ void ParallelPossibilitiesRemoverImpl::RemoveQueuedUnvalidPossibilities(FoundCel
             }
         }
     }
-
-    std::lock_guard<std::mutex> l(foundCells.m_Mutex);
-    while(!foundCells.m_Queue.empty())
-        foundCells.m_Queue.pop();
 }

@@ -152,8 +152,6 @@ TEST_F(TestParallelPossibilitiesRemover, AllThreadsStopCorrectlyIfOneThreadStopA
                 .WillOnce(Invoke([this](Cell const&, Grid&, FoundCells&)
                     {
                         std::this_thread::sleep_for(std::chrono::milliseconds((rand() % 5) + 1));
-                        m_FoundCells->m_Queue.push(m_Grid.m_Cells[1][0]);
-                        std::this_thread::sleep_for(std::chrono::milliseconds((rand() % 5) + 5));
                     }));
 
         EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[0][1]), Ref(m_Grid), Ref(*m_FoundCells)))
@@ -167,21 +165,15 @@ TEST_F(TestParallelPossibilitiesRemover, AllThreadsStopCorrectlyIfOneThreadStopA
                 .WillOnce(Invoke([this](Cell const&, Grid&, FoundCells&)
                     {
                         std::this_thread::sleep_for(std::chrono::milliseconds((rand() % 5) + 1));
-                        m_FoundCells->m_Queue.push(m_Grid.m_Cells[1][1]);
-                        std::this_thread::sleep_for(std::chrono::milliseconds((rand() % 5) + 5));
                     }));
 
         EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[0][3]), Ref(m_Grid), Ref(*m_FoundCells)))
                 .WillOnce(Invoke([this](Cell const&, Grid&, FoundCells&)
                     {
                         std::this_thread::sleep_for(std::chrono::milliseconds((rand() % 5) + 1));
-                        m_FoundCells->m_Queue.push(m_Grid.m_Cells[1][2]);
-                        std::this_thread::sleep_for(std::chrono::milliseconds((rand() % 5) + 5));
                     }));
 
-        MakeParallelPossibilitiesRemover(parallelThreadsCount)->UpdateGrid(*m_FoundCells, m_Grid);
-
-        EXPECT_TRUE(m_FoundCells->m_Queue.empty());
+        EXPECT_THROW(MakeParallelPossibilitiesRemover(parallelThreadsCount)->UpdateGrid(*m_FoundCells, m_Grid), std::exception);
     }
 }
 

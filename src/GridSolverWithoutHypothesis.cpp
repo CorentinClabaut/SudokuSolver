@@ -33,19 +33,21 @@ GridStatus GridSolverWithoutHypothesisImpl::Solve(Grid& grid, FoundCells& foundC
     if (foundCells.m_Queue.empty())
         throw std::runtime_error("Can't solve without hypothesis if no cell has been found");
 
-    while(!foundCells.m_Queue.empty())
+    try
     {
-        if (!m_ParallelPossibilitiesRemover->UpdateGrid(foundCells, grid))
-            return GridStatus::Wrong;
-
-        try
+        while(!foundCells.m_Queue.empty())
         {
+            m_ParallelPossibilitiesRemover->UpdateGrid(foundCells, grid);
+
             m_ParallelUniquePossibilitySetter->SetCellsWithUniquePossibility(grid, foundCells);
         }
-        catch(std::exception const&)
-        {
-            return GridStatus::Wrong;
-        }
+    }
+    catch(std::exception const&)
+    {
+        while(!foundCells.m_Queue.empty())
+            foundCells.m_Queue.pop();
+
+        return GridStatus::Wrong;
     }
 
     return AreAllCellsSet(grid) ? GridStatus::SolvedCorrectly : GridStatus::Incomplete;

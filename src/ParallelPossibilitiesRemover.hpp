@@ -14,7 +14,7 @@ class ParallelPossibilitiesRemover
 public:
     virtual ~ParallelPossibilitiesRemover() = default;
 
-    virtual bool UpdateGrid(FoundCells& foundCells, Grid& grid) const = 0;
+    virtual void UpdateGrid(FoundCells& foundCells, Grid& grid) const = 0;
 };
 
 class ParallelPossibilitiesRemoverImpl : public ParallelPossibilitiesRemover
@@ -24,7 +24,7 @@ public:
             int parallelThreadsCount,
             std::unique_ptr<PossibilitiesRemover> possibilitiesRemover);
 
-    bool UpdateGrid(FoundCells& foundCells, Grid& grid) const override;
+    void UpdateGrid(FoundCells& foundCells, Grid& grid) const override;
 
 private:
     void RemoveQueuedUnvalidPossibilities(FoundCells& foundCells, Grid& grid, int& threadsWorkingCount, std::atomic<bool>& exception) const;

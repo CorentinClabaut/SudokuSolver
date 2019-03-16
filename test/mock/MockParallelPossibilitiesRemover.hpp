@@ -11,7 +11,7 @@ namespace test
 class MockParallelPossibilitiesRemover : public ParallelPossibilitiesRemover
 {
 public:
-    MOCK_CONST_METHOD2(UpdateGrid, bool(FoundCells& foundCells, Grid& grid));
+    MOCK_CONST_METHOD2(UpdateGrid, void(FoundCells& foundCells, Grid& grid));
 };
 
 } /* namespace test */
