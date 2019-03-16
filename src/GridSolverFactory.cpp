@@ -3,7 +3,6 @@
 #include "GridSolverWithoutHypothesis.hpp"
 #include "ParallelPossibilitiesRemover.hpp"
 #include "ParallelUniquePossibilitySetter.hpp"
-#include "GridStatusGetter.hpp"
 #include "PossibilitiesRemover.hpp"
 #include "RelatedCellsGetter.hpp"
 #include "UniquePossibilitySetter.hpp"
@@ -29,9 +28,6 @@ std::unique_ptr<GridSolver> GridSolverFactory::Make(int parallelThreadsCount)
                                 std::make_unique<RelatedCellsGetterImpl>()
                             )
                         )
-                    ),
-                    std::make_unique<GridStatusGetterImpl>(
-                        std::make_unique<RelatedCellsGetterImpl>()
                     )
                 )
             );

@@ -95,7 +95,7 @@ TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells)
     EXPECT_TRUE(foundCells.m_Queue.empty());
 }
 
-TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells_IgnoreRelatedCellAlreadySet)
+TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells_RelatedCellNotIdentical)
 {
     const Value cellValue {3};
 
@@ -118,6 +118,23 @@ TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells_IgnoreRelatedCel
     EXPECT_THAT(grid, Eq(expectedGrid));
 
     EXPECT_TRUE(foundCells.m_Queue.empty());
+}
+
+TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells_RelatedCellAlreadySetWithSameValue)
+{
+    const Value cellValue {3};
+
+    Grid grid {m_GridSize};
+    FoundCells foundCells;
+
+    SetupCel1x1RelatedCellsGetter(grid);
+
+    auto cell = grid.m_Cells[1][1];
+    cell->SetValue(cellValue);
+
+    grid.m_Cells[0][0]->SetValue(cellValue);
+
+    EXPECT_THROW(MakePossibilitiesRemover()->UpdateGrid(*cell, grid, foundCells), std::exception);
 }
 
 TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells_FindNewCellValue)

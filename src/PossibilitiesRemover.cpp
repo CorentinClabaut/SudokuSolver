@@ -1,8 +1,7 @@
 #include "PossibilitiesRemover.hpp"
 
-#include <boost/range/adaptors.hpp>
-#include <boost/range/algorithm.hpp>
-#include <boost/range/algorithm_ext.hpp>
+#include <boost/algorithm/cxx11/any_of.hpp>
+#include <boost/range.hpp>
 
 #include "Grid.hpp"
 #include "Cell.hpp"
@@ -13,14 +12,40 @@ using namespace sudoku;
 
 namespace
 {
-bool CellFound(SharedCell cell)
+
+bool HasValue(SharedCell cell)
 {
     return cell->GetValue().has_value();
 }
-bool CellNotFound(SharedCell cell)
+
+auto PartitionFoundAndNotFoundCells(std::vector<SharedCell>& cells)
 {
-    return !cell->GetValue().has_value();
+    const auto middle = std::partition(cells.begin(), cells.end(), HasValue);
+
+    return std::pair{boost::make_iterator_range(cells.begin(), middle), boost::make_iterator_range(middle, cells.end())};
 }
+
+template<typename TRange>
+void ValidateNoFoundCellSetWithValue(TRange const& foundRelatedCells, Value foundValue)
+{
+    if (boost::algorithm::any_of(foundRelatedCells, [foundValue](const auto cell){ return cell->GetValue() == foundValue; }))
+        throw std::runtime_error("related cell already has new found cell value.");
+}
+
+template<typename TRange>
+void UpdateRelatedCellsPossibilities(TRange const& notFoundRelatedCells, Value foundValue, FoundCells& foundCells)
+{
+    for (auto cell : notFoundRelatedCells)
+    {
+        cell->RemovePossibility(foundValue);
+
+        if (HasValue(cell))
+        {
+            foundCells.Enqueue(cell);
+        }
+    }
+}
+
 } // anonymous namespace
 
 PossibilitiesRemoverImpl::PossibilitiesRemoverImpl(std::unique_ptr<RelatedCellsGetter> relatedCellsGetter) :
@@ -29,7 +54,7 @@ PossibilitiesRemoverImpl::PossibilitiesRemoverImpl(std::unique_ptr<RelatedCellsG
 
 void PossibilitiesRemoverImpl::UpdateGrid(Cell const& newFoundCell, Grid& grid, FoundCells& foundCells) const
 {
-    auto foundValue = newFoundCell.GetValue();
+    const auto foundValue = newFoundCell.GetValue();
 
     if (!foundValue)
     {
@@ -39,11 +64,10 @@ void PossibilitiesRemoverImpl::UpdateGrid(Cell const& newFoundCell, Grid& grid, 
     }
 
     auto relatedCells = m_RelatedCellsGetter->GetAllRelatedCells(newFoundCell.GetPosition(), grid);
-    boost::range::remove_erase_if(relatedCells, CellFound);
 
-    boost::for_each(relatedCells, [=](auto& cell){ cell->RemovePossibility(*foundValue); });
+    const auto& [relatedFoundCells, relatedNotFoundCells] = PartitionFoundAndNotFoundCells(relatedCells);
 
-    boost::range::remove_erase_if(relatedCells, CellNotFound);
+    ValidateNoFoundCellSetWithValue(relatedFoundCells, *foundValue);
 
-    boost::for_each(relatedCells, [&](auto cell){ foundCells.Enqueue(cell); });
+    UpdateRelatedCellsPossibilities(relatedNotFoundCells, *foundValue, foundCells);
 }

@@ -3,18 +3,20 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <exception>
+
 #include "FoundCells.hpp"
 #include "GridStatus.hpp"
 #include "Grid.hpp"
 
 #include "mock/MockParallelPossibilitiesRemover.hpp"
 #include "mock/MockParallelUniquePossibilitySetter.hpp"
-#include "mock/MockGridStatusGetter.hpp"
 #include "utils/Utils.hpp"
 
 using testing::_;
 using testing::Eq;
 using testing::Ref;
+using testing::Throw;
 using testing::Return;
 using testing::Invoke;
 using testing::StrictMock;
@@ -35,19 +37,24 @@ public:
     {
         return std::make_unique<GridSolverWithoutHypothesisImpl>(
                     std::move(m_ParallelPossibilitiesRemover),
-                    std::move(m_ParallelUniquePossibilitySetter),
-                    std::move(m_GridStatusGetter));
-    }
-
-    void ExpectGridStatus(Grid const& grid, GridStatus gridStatus)
-    {
-        EXPECT_CALL(*m_GridStatusGetter, GetStatus(Ref(grid))).WillOnce(Return(gridStatus));
+                    std::move(m_ParallelUniquePossibilitySetter));
     }
 
     void ExpectUpdateGrid(Grid& grid)
     {
         EXPECT_CALL(*m_ParallelPossibilitiesRemover, UpdateGrid(_, Ref(grid)))
-                .WillOnce(Invoke([](FoundCells& foundCells, Grid&){ while(!foundCells.m_Queue.empty()) { foundCells.m_Queue.pop();} }));
+                .WillOnce(Invoke([](FoundCells& foundCells, Grid&){ while(!foundCells.m_Queue.empty()) { foundCells.m_Queue.pop();} return true; }));
+    }
+
+    void ExpectUpdateGrid_SolveGrid(Grid& grid)
+    {
+        EXPECT_CALL(*m_ParallelPossibilitiesRemover, UpdateGrid(_, Ref(grid)))
+                .WillOnce(Invoke([](FoundCells& foundCells, Grid& grid)
+                    {
+                        while(!foundCells.m_Queue.empty()) { foundCells.m_Queue.pop();}
+                        for (auto cell : grid) { if (!cell->GetValue()) cell->SetValue(1); }
+                        return true;
+                    }));
     }
 
     void ExpectSetCellsWithUniquePossibility_FoundCells(Grid& grid, SharedCell newFoundCell)
@@ -65,8 +72,12 @@ public:
 
     std::unique_ptr<MockParallelPossibilitiesRemover> m_ParallelPossibilitiesRemover = std::make_unique<StrictMock<MockParallelPossibilitiesRemover>>();
     std::unique_ptr<MockParallelUniquePossibilitySetter> m_ParallelUniquePossibilitySetter = std::make_unique<StrictMock<MockParallelUniquePossibilitySetter>>();
-    std::unique_ptr<MockGridStatusGetter> m_GridStatusGetter = std::make_unique<StrictMock<MockGridStatusGetter>>();
 };
+
+ACTION(ThrowException)
+{
+    throw std::runtime_error("exception");
+}
 
 TEST_F(TestGridSolverWithoutHypothesis, EmptyFoundCellsInThrow)
 {
@@ -76,57 +87,29 @@ TEST_F(TestGridSolverWithoutHypothesis, EmptyFoundCellsInThrow)
     EXPECT_THROW(MakeGridSolverWithoutHypothesis()->Solve(grid, m_FoundCells), std::exception);
 }
 
-TEST_F(TestGridSolverWithoutHypothesis, CorrectlySolvedGridIn)
+TEST_F(TestGridSolverWithoutHypothesis, CouldntResolveIfRemovePossibilityFail)
 {
-    Grid grid = Create4x4CorrectlySolvedGrid();
+    Grid grid = Create4x4CorrectlyPartiallyFilledGrid();
     m_FoundCells.m_Queue.push(grid.m_Cells[0][0]);
 
-    ExpectGridStatus(grid, GridStatus::SolvedCorrectly);
-
-    auto gridStatus = MakeGridSolverWithoutHypothesis()->Solve(grid, m_FoundCells);
-
-    EXPECT_THAT(gridStatus, Eq(GridStatus::SolvedCorrectly));
-}
-
-TEST_F(TestGridSolverWithoutHypothesis, IncorrectlySolvedGridIn)
-{
-    Grid grid = Create4x4IncorrectlySolvedGrid();
-    m_FoundCells.m_Queue.push(grid.m_Cells[0][0]);
-
-    ExpectGridStatus(grid, GridStatus::Wrong);
+    EXPECT_CALL(*m_ParallelPossibilitiesRemover, UpdateGrid(_, Ref(grid)))
+            .WillRepeatedly(Return(false));
 
     auto gridStatus = MakeGridSolverWithoutHypothesis()->Solve(grid, m_FoundCells);
 
     EXPECT_THAT(gridStatus, Eq(GridStatus::Wrong));
 }
 
-TEST_F(TestGridSolverWithoutHypothesis, CorrectlySolvedAfterUpdateGrid)
+TEST_F(TestGridSolverWithoutHypothesis, CouldntResolveIfSetCellsWithUniquePossibilityThrow)
 {
     Grid grid = Create4x4CorrectlyPartiallyFilledGrid();
     m_FoundCells.m_Queue.push(grid.m_Cells[0][0]);
 
     {
     InSequence s;
-    ExpectGridStatus(grid, GridStatus::Incomplete);
     ExpectUpdateGrid(grid);
-    ExpectGridStatus(grid, GridStatus::SolvedCorrectly);
-    }
-
-    auto gridStatus = MakeGridSolverWithoutHypothesis()->Solve(grid, m_FoundCells);
-
-    EXPECT_THAT(gridStatus, Eq(GridStatus::SolvedCorrectly));
-}
-
-TEST_F(TestGridSolverWithoutHypothesis, IncorrectlySolvedAfterUpdateGrid)
-{
-    Grid grid = Create4x4CorrectlyPartiallyFilledGrid();
-    m_FoundCells.m_Queue.push(grid.m_Cells[0][0]);
-
-    {
-    InSequence s;
-    ExpectGridStatus(grid, GridStatus::Incomplete);
-    ExpectUpdateGrid(grid);
-    ExpectGridStatus(grid, GridStatus::Wrong);
+    EXPECT_CALL(*m_ParallelUniquePossibilitySetter, SetCellsWithUniquePossibility(Ref(grid), _))
+            .WillRepeatedly(ThrowException());
     }
 
     auto gridStatus = MakeGridSolverWithoutHypothesis()->Solve(grid, m_FoundCells);
@@ -134,18 +117,15 @@ TEST_F(TestGridSolverWithoutHypothesis, IncorrectlySolvedAfterUpdateGrid)
     EXPECT_THAT(gridStatus, Eq(GridStatus::Wrong));
 }
 
-TEST_F(TestGridSolverWithoutHypothesis, CorrectlySolvedAfterSetCellsWithUniquePossibility)
+TEST_F(TestGridSolverWithoutHypothesis, GridSolvedAfterFirstRemovePossibilities)
 {
     Grid grid = Create4x4CorrectlyPartiallyFilledGrid();
     m_FoundCells.m_Queue.push(grid.m_Cells[0][0]);
 
     {
     InSequence s;
-    ExpectGridStatus(grid, GridStatus::Incomplete);
-    ExpectUpdateGrid(grid);
-    ExpectGridStatus(grid, GridStatus::Incomplete);
-    ExpectSetCellsWithUniquePossibility_FoundCells(grid, grid.m_Cells[1][1]);
-    ExpectGridStatus(grid, GridStatus::SolvedCorrectly);
+    ExpectUpdateGrid_SolveGrid(grid);
+    ExpectSetCellsWithUniquePossibility_NoCellFound(grid);
     }
 
     auto gridStatus = MakeGridSolverWithoutHypothesis()->Solve(grid, m_FoundCells);
@@ -153,41 +133,38 @@ TEST_F(TestGridSolverWithoutHypothesis, CorrectlySolvedAfterSetCellsWithUniquePo
     EXPECT_THAT(gridStatus, Eq(GridStatus::SolvedCorrectly));
 }
 
-TEST_F(TestGridSolverWithoutHypothesis, IncorrectlySolvedAfterSetCellsWithUniquePossibility)
+TEST_F(TestGridSolverWithoutHypothesis, GridNotSolvedAfterFirstRemovePossibilities)
 {
     Grid grid = Create4x4CorrectlyPartiallyFilledGrid();
     m_FoundCells.m_Queue.push(grid.m_Cells[0][0]);
 
     {
     InSequence s;
-    ExpectGridStatus(grid, GridStatus::Incomplete);
     ExpectUpdateGrid(grid);
-    ExpectGridStatus(grid, GridStatus::Incomplete);
-    ExpectSetCellsWithUniquePossibility_FoundCells(grid, grid.m_Cells[1][1]);
-    ExpectGridStatus(grid, GridStatus::Wrong);
-    }
-
-    auto gridStatus = MakeGridSolverWithoutHypothesis()->Solve(grid, m_FoundCells);
-
-    EXPECT_THAT(gridStatus, Eq(GridStatus::Wrong));
-}
-
-TEST_F(TestGridSolverWithoutHypothesis, CantCompleteGrid)
-{
-    Grid grid = Create4x4CorrectlyPartiallyFilledGrid();
-    m_FoundCells.m_Queue.push(grid.m_Cells[0][0]);
-
-    {
-    InSequence s;
-    ExpectGridStatus(grid, GridStatus::Incomplete);
-    ExpectUpdateGrid(grid);
-    ExpectGridStatus(grid, GridStatus::Incomplete);
     ExpectSetCellsWithUniquePossibility_NoCellFound(grid);
     }
 
     auto gridStatus = MakeGridSolverWithoutHypothesis()->Solve(grid, m_FoundCells);
 
     EXPECT_THAT(gridStatus, Eq(GridStatus::Incomplete));
+}
+
+TEST_F(TestGridSolverWithoutHypothesis, GridSolvedAfterSecondRemovePossibilities)
+{
+    Grid grid = Create4x4CorrectlyPartiallyFilledGrid();
+    m_FoundCells.m_Queue.push(grid.m_Cells[0][0]);
+
+    {
+    InSequence s;
+    ExpectUpdateGrid(grid);
+    ExpectSetCellsWithUniquePossibility_FoundCells(grid, grid.m_Cells[2][3]);
+    ExpectUpdateGrid_SolveGrid(grid);
+    ExpectSetCellsWithUniquePossibility_NoCellFound(grid);
+    }
+
+    auto gridStatus = MakeGridSolverWithoutHypothesis()->Solve(grid, m_FoundCells);
+
+    EXPECT_THAT(gridStatus, Eq(GridStatus::SolvedCorrectly));
 }
 
 } /* namespace test */

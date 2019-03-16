@@ -224,7 +224,7 @@ inline Grid Create4x4CorrectlySolvedGrid()
 inline Grid Create4x4CorrectlyPartiallyFilledGrid()
 {
     auto positionsValues = CreatePositionsValues4x4();
-    KeepRandomCells(positionsValues, 6);
+    positionsValues = KeepRandomCells(positionsValues, 6);
     return CreateGrid(4, positionsValues);
 }
 

@@ -2,20 +2,30 @@
 
 #include "ParallelPossibilitiesRemover.hpp"
 #include "ParallelUniquePossibilitySetter.hpp"
-#include "GridStatusGetter.hpp"
 #include "FoundCells.hpp"
 #include "GridStatus.hpp"
 #include "Grid.hpp"
 
 using namespace sudoku;
 
+namespace
+{
+bool AreAllCellsSet(Grid const& grid)
+{
+    auto isSet = [](SharedCell const& cell)
+    {
+        return cell->GetValue().has_value();
+    };
+
+    return std::all_of(grid.begin(), grid.end(), isSet);
+}
+} // anonymous namespace
+
 GridSolverWithoutHypothesisImpl::GridSolverWithoutHypothesisImpl(
         std::unique_ptr<ParallelPossibilitiesRemover> parallelPossibilitiesRemover,
-        std::unique_ptr<ParallelUniquePossibilitySetter> parallelUniquePossibilitySetter,
-        std::unique_ptr<GridStatusGetter> gridStatusGetter) :
+        std::unique_ptr<ParallelUniquePossibilitySetter> parallelUniquePossibilitySetter) :
     m_ParallelPossibilitiesRemover(std::move(parallelPossibilitiesRemover)),
-    m_ParallelUniquePossibilitySetter(std::move(parallelUniquePossibilitySetter)),
-    m_GridStatusGetter(std::move(gridStatusGetter))
+    m_ParallelUniquePossibilitySetter(std::move(parallelUniquePossibilitySetter))
 {}
 
 GridStatus GridSolverWithoutHypothesisImpl::Solve(Grid& grid, FoundCells& foundCells) const
@@ -23,31 +33,20 @@ GridStatus GridSolverWithoutHypothesisImpl::Solve(Grid& grid, FoundCells& foundC
     if (foundCells.m_Queue.empty())
         throw std::runtime_error("Can't solve without hypothesis if no cell has been found");
 
-    try
+    while(!foundCells.m_Queue.empty())
     {
-        while(!foundCells.m_Queue.empty())
+        if (!m_ParallelPossibilitiesRemover->UpdateGrid(foundCells, grid))
+            return GridStatus::Wrong;
+
+        try
         {
-            if (auto gridStatus = m_GridStatusGetter->GetStatus(grid);
-                gridStatus == GridStatus::SolvedCorrectly || gridStatus == GridStatus::Wrong)
-            {
-                return gridStatus;
-            }
-
-            m_ParallelPossibilitiesRemover->UpdateGrid(foundCells, grid);
-
-            if (auto gridStatus = m_GridStatusGetter->GetStatus(grid);
-                gridStatus == GridStatus::SolvedCorrectly || gridStatus == GridStatus::Wrong)
-            {
-                return gridStatus;
-            }
-
             m_ParallelUniquePossibilitySetter->SetCellsWithUniquePossibility(grid, foundCells);
         }
+        catch(std::exception const&)
+        {
+            return GridStatus::Wrong;
+        }
+    }
 
-        return GridStatus::Incomplete;
-    }
-    catch(std::exception const& e)
-    {
-        return GridStatus::Wrong;
-    }
+    return AreAllCellsSet(grid) ? GridStatus::SolvedCorrectly : GridStatus::Incomplete;
 }

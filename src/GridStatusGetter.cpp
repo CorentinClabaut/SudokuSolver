@@ -26,12 +26,17 @@ std::vector<SharedCell> GetCellsSet(Grid const& grid)
 
 std::vector<Value> GetSetCellValues(std::vector<SharedCell> const& relatedCells)
 {
-    auto values = relatedCells
-            | boost::adaptors::transformed(+[](SharedCell const& c){ return c->GetValue(); })
-            | boost::adaptors::filtered(+[](std::optional<Value> const& o){ return o.has_value(); })
-            | boost::adaptors::transformed(+[](std::optional<Value> const& o){ return o.value(); });
+    std::vector<Value> setCells;
 
-    return boost::copy_range<std::vector<Value>>(values);
+    for (auto const& cell : relatedCells)
+    {
+        auto val = cell->GetValue();
+
+        if (val)
+            setCells.push_back(*val);
+    }
+
+    return setCells;
 }
 
 bool AreAllCellsSet(Grid const& grid)

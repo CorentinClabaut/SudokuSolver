@@ -7,7 +7,6 @@ namespace sudoku
 
 class ParallelPossibilitiesRemover;
 class ParallelUniquePossibilitySetter;
-class GridStatusGetter;
 struct FoundCells;
 struct Grid;
 enum class GridStatus;
@@ -25,15 +24,13 @@ class GridSolverWithoutHypothesisImpl : public GridSolverWithoutHypothesis
 public:
     GridSolverWithoutHypothesisImpl(
             std::unique_ptr<ParallelPossibilitiesRemover> parallelPossibilitiesRemover,
-            std::unique_ptr<ParallelUniquePossibilitySetter> parallelUniquePossibilitySetter,
-            std::unique_ptr<GridStatusGetter> gridStatusGetter);
+            std::unique_ptr<ParallelUniquePossibilitySetter> parallelUniquePossibilitySetter);
 
     GridStatus Solve(Grid& grid, FoundCells& foundCells) const override;
 
 private:
     std::unique_ptr<ParallelPossibilitiesRemover> m_ParallelPossibilitiesRemover;
     std::unique_ptr<ParallelUniquePossibilitySetter> m_ParallelUniquePossibilitySetter;
-    std::unique_ptr<GridStatusGetter> m_GridStatusGetter;
 };
 
 } /* namespace sudoku */
