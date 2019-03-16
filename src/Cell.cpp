@@ -66,11 +66,9 @@ bool Cell::IsSet() const
     return m_Possibilities.size() == 1;
 }
 
-Possibilities Cell::GetPossibilities() const
+LockedPossibilities Cell::GetLockedPossibilities() const
 {
-    std::shared_lock<std::shared_timed_mutex> readLock(m_PossibilitiesMutex);
-
-    return m_Possibilities;
+    return LockedPossibilities {m_Possibilities, m_PossibilitiesMutex};
 }
 
 int Cell::GetNumberPossibilitiesLeft() const

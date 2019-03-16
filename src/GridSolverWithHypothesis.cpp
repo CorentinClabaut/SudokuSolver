@@ -48,7 +48,9 @@ Position SelectBestPositionForHypothesis(Grid const& grid)
 
 Value SelectHypothesisValue(Grid& grid, Position const& hypothesisCellPosition)
 {
-    return *grid.GetCell(hypothesisCellPosition)->GetPossibilities().begin();
+    auto const& lockedPossibilities = grid.GetCell(hypothesisCellPosition)->GetLockedPossibilities();
+
+    return *lockedPossibilities.m_Possibilities.begin();
 }
 
 void SetHypotheticCellValue(Grid& grid, FoundCells& foundCells, Position const& hypothesisCellPosition, Value valueToTry)

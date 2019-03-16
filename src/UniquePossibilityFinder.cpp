@@ -32,9 +32,9 @@ void RemoveRelatedCellsPossibilities(std::vector<Value>& possibilities, CellsGro
 {
     for(auto const& relatedCell : relatedCells)
     {
-        const auto relatedCellPossibilities = relatedCell->GetPossibilities();
+        auto const& lockedPossibilities = relatedCell->GetLockedPossibilities();
 
-        boost::range::remove_erase_if(possibilities, [&](Value v){ return relatedCellPossibilities.count(v); });
+        boost::range::remove_erase_if(possibilities, [&](Value v){ return lockedPossibilities.m_Possibilities.count(v); });
     }
 }
 

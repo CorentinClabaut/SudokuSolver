@@ -30,14 +30,10 @@ void GetValueUntilFound(Cell const& cell)
     }
 }
 
-void GetPossibilitiesUntilFound(Cell const& cell)
+void GetLockedPossibilitiesUntilFound(Cell const& cell)
 {
-   Possibilities possibilities {};
-
-    while(possibilities.size() != 1)
-    {
-        possibilities = cell.GetPossibilities();
-    }
+    while (cell.GetLockedPossibilities().m_Possibilities.size() != 1)
+        ;
 }
 
 class TestCell : public ::testing::Test
@@ -82,20 +78,16 @@ TEST_F(TestCell, SetValue)
     EXPECT_TRUE(cell.IsSet());
 }
 
-TEST_F(TestCell, GetPossibilities)
+TEST_F(TestCell, GetLockedPossibilities)
 {
     Cell cell(Position{1, 2}, 4);
 
-    auto possibilities = cell.GetPossibilities();
-
-    EXPECT_THAT(possibilities, Eq(Possibilities{1, 2, 3, 4}));
+    EXPECT_THAT(cell.GetLockedPossibilities().m_Possibilities, Eq(Possibilities{1, 2, 3, 4}));
     EXPECT_THAT(cell.GetNumberPossibilitiesLeft(), Eq(4));
 
     cell.RemovePossibility(2);
 
-    possibilities = cell.GetPossibilities();
-
-    EXPECT_THAT(possibilities, Eq(Possibilities{1, 3, 4}));
+    EXPECT_THAT(cell.GetLockedPossibilities().m_Possibilities, Eq(Possibilities{1, 3, 4}));
     EXPECT_THAT(cell.GetNumberPossibilitiesLeft(), Eq(3));
 }
 
@@ -170,7 +162,7 @@ TEST_F(TestCell, SeveralThreadsReadAndWriteOnCell)
         Cell cell(Position{1, 2}, 9);
 
         std::thread reader1(GetValueUntilFound, std::cref(cell));
-        std::thread reader2(GetPossibilitiesUntilFound, std::cref(cell));
+        std::thread reader2(GetLockedPossibilitiesUntilFound, std::cref(cell));
 
         std::thread writter1(RemoveAllCellPossibilitiesBut, std::ref(cell), std::unordered_set<Value>{expectedValue});
         std::thread writter2(RemoveAllCellPossibilitiesBut, std::ref(cell), std::unordered_set<Value>{expectedValue});

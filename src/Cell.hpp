@@ -5,6 +5,7 @@
 
 #include "Possibilities.hpp"
 #include "Position.hpp"
+#include "LockedPossibilites.hpp"
 
 namespace sudoku
 {
@@ -23,7 +24,7 @@ public:
     std::optional<Value> GetValue() const;
 
     bool IsSet() const;
-    Possibilities GetPossibilities() const;
+    LockedPossibilities GetLockedPossibilities() const;
     int GetNumberPossibilitiesLeft() const;
 
     Position const& GetPosition() const;
