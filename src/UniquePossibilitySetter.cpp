@@ -15,7 +15,7 @@ void UniquePossibilitySetterImpl::SetCellsWithUniquePossibility(std::vector<Shar
 {
     for (auto cell : cells)
     {
-        if (cell->GetValue().has_value())
+        if (cell->IsSet())
             continue;
 
         auto uniquePossibility = m_UniquePossibilityFinder->FindUniquePossibility(cell->GetPosition(), grid);

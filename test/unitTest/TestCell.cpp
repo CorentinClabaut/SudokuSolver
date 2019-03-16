@@ -63,6 +63,7 @@ TEST_F(TestCell, ValueNotSet)
     auto value = cell.GetValue();
 
     EXPECT_THAT(value, Eq(std::nullopt));
+    EXPECT_FALSE(cell.IsSet());
 }
 
 TEST_F(TestCell, SetValue)
@@ -77,6 +78,8 @@ TEST_F(TestCell, SetValue)
 
     EXPECT_THAT(value, Ne(std::nullopt));
     EXPECT_THAT(*value, Eq(expectedValue));
+
+    EXPECT_TRUE(cell.IsSet());
 }
 
 TEST_F(TestCell, GetPossibilities)
@@ -86,12 +89,14 @@ TEST_F(TestCell, GetPossibilities)
     auto possibilities = cell.GetPossibilities();
 
     EXPECT_THAT(possibilities, Eq(Possibilities{1, 2, 3, 4}));
+    EXPECT_THAT(cell.GetNumberPossibilitiesLeft(), Eq(4));
 
     cell.RemovePossibility(2);
 
     possibilities = cell.GetPossibilities();
 
     EXPECT_THAT(possibilities, Eq(Possibilities{1, 3, 4}));
+    EXPECT_THAT(cell.GetNumberPossibilitiesLeft(), Eq(3));
 }
 
 TEST_F(TestCell, SetSameValueTwice)

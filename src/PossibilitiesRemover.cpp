@@ -13,14 +13,9 @@ using namespace sudoku;
 namespace
 {
 
-bool HasValue(SharedCell cell)
-{
-    return cell->GetValue().has_value();
-}
-
 auto PartitionFoundAndNotFoundCells(std::vector<SharedCell>& cells)
 {
-    const auto middle = std::partition(cells.begin(), cells.end(), HasValue);
+    const auto middle = std::partition(cells.begin(), cells.end(), [](auto const& cell){ return cell->IsSet(); });
 
     return std::pair{boost::make_iterator_range(cells.begin(), middle), boost::make_iterator_range(middle, cells.end())};
 }
@@ -39,7 +34,7 @@ void UpdateRelatedCellsPossibilities(TRange const& notFoundRelatedCells, Value f
     {
         cell->RemovePossibility(foundValue);
 
-        if (HasValue(cell))
+        if (cell->IsSet())
         {
             foundCells.Enqueue(cell);
         }

@@ -12,12 +12,7 @@ namespace
 {
 bool AreAllCellsSet(Grid const& grid)
 {
-    auto isSet = [](SharedCell const& cell)
-    {
-        return cell->GetValue().has_value();
-    };
-
-    return std::all_of(grid.begin(), grid.end(), isSet);
+    return std::all_of(grid.begin(), grid.end(), [](auto const& cell){ return cell->IsSet(); });
 }
 } // anonymous namespace
 

@@ -16,21 +16,19 @@ void GetFoundCells(Grid const& grid, FoundCells& foundCells)
 {
     for (auto cell : grid)
     {
-        auto value = cell->GetValue();
-
-        if (value)
+        if (cell->IsSet())
             foundCells.m_Queue.push(cell);
     }
 }
 
 Position SelectBestPositionForHypothesis(Grid const& grid)
 {
-    size_t minimumNumberPossibilities = std::numeric_limits<size_t>::max();
+    int minimumNumberPossibilities = std::numeric_limits<int>::max();
     Position bestPosition;
 
     for (auto const& cell : grid)
     {
-        const auto possibilitiesCount = cell->GetPossibilities().size();
+        const auto possibilitiesCount = cell->GetNumberPossibilitiesLeft();
 
         if (possibilitiesCount == 1)
             continue;
@@ -42,7 +40,7 @@ Position SelectBestPositionForHypothesis(Grid const& grid)
         }
     }
 
-    if (minimumNumberPossibilities == std::numeric_limits<size_t>::max())
+    if (minimumNumberPossibilities == std::numeric_limits<int>::max())
         throw std::runtime_error("Can't find best position for hyposesis in completed grid.");
 
     return bestPosition;
@@ -63,7 +61,7 @@ void SetHypotheticCellValue(Grid& grid, FoundCells& foundCells, Position const& 
 
 bool CellHasOnlyOnePossibilityLeft(Grid& grid, Position const& position)
 {
-    return grid.GetCell(position)->GetPossibilities().size() == 1;
+    return grid.GetCell(position)->GetNumberPossibilitiesLeft() == 1;
 }
 
 void RemoveWrongHypotheticCellValue(Grid& gridBeforeHypothesis, Position const& hypothesisCellPosition, Value triedValue)

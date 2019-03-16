@@ -19,7 +19,7 @@ std::vector<SharedCell> GetCellsSet(Grid const& grid)
 {
     std::vector<SharedCell> cellsSet;
 
-    std::copy_if(grid.begin(), grid.end(), std::back_inserter(cellsSet), [](auto const& cell){ return cell->GetValue(); });
+    std::copy_if(grid.begin(), grid.end(), std::back_inserter(cellsSet), [](auto const& cell){ return cell->IsSet(); });
 
     return cellsSet;
 }
@@ -41,9 +41,7 @@ std::vector<Value> GetSetCellValues(std::vector<SharedCell> const& relatedCells)
 
 bool AreAllCellsSet(Grid const& grid)
 {
-    auto isSet = [](SharedCell const& cell){ return cell->GetValue(); };
-
-    return std::all_of(grid.begin(), grid.end(), isSet);
+    return std::all_of(grid.begin(), grid.end(), [](auto const& cell){ return cell->IsSet(); });
 }
 } // anonymous namespace
 

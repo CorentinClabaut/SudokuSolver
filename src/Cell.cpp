@@ -59,11 +59,25 @@ std::optional<Value> Cell::GetValue() const
     return *m_Possibilities.begin();
 }
 
+bool Cell::IsSet() const
+{
+    std::shared_lock<std::shared_timed_mutex> readLock(m_PossibilitiesMutex);
+
+    return m_Possibilities.size() == 1;
+}
+
 Possibilities Cell::GetPossibilities() const
 {
     std::shared_lock<std::shared_timed_mutex> readLock(m_PossibilitiesMutex);
 
     return m_Possibilities;
+}
+
+int Cell::GetNumberPossibilitiesLeft() const
+{
+    std::shared_lock<std::shared_timed_mutex> readLock(m_PossibilitiesMutex);
+
+    return m_Possibilities.size();
 }
 
 const Position& Cell::GetPosition() const
