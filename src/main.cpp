@@ -3,6 +3,7 @@
 #include <chrono>
 #include <thread>
 
+#include <boost/range/irange.hpp>
 #include <boost/range/numeric.hpp>
 
 #include "GridSolverFactory.hpp"
@@ -22,8 +23,11 @@ using namespace sudoku::test;
 //after few algo improvement and stop checking status in SolverWithoutHypothesis.
 //time over 1000 exec : 11'970 micro seconds
 
+//time after Possibilities optimisation: 5'706 micro seconds
+
 //optimisations steps:
 //run profiler on program and modify algorithm in order to delete bottlenek
+//Optimisation of Possibilities class to use bitset instead of unordered_set
 
 
 int main ()

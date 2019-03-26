@@ -14,42 +14,39 @@ using namespace sudoku;
 
 namespace
 {
-void ValidateOnlyOneMissingPossibility(std::vector<Value> const& possibilities, Position const& cellPosition)
+void ValidateOnlyOneMissingPossibility(Possibilities const& possibilities)
 {
-    if (possibilities.size() > 1)
+    if (possibilities.GetNumberPossibilitiesLeft() > 1)
     {
-        auto toString = [](int i){ return std::to_string(i); };
-
-        std::stringstream error;
-        error << "Cell " << cellPosition << " contains more than 1 unique possibility ("
-              << boost::algorithm::join(possibilities | boost::adaptors::transformed(toString), ", ") << ")";
-
-        throw std::runtime_error(error.str());
+        throw std::runtime_error("Detected cell with more than one solution");
     }
 }
 
-void RemoveRelatedCellsPossibilities(std::vector<Value>& possibilities, CellsGroup const& relatedCells)
+void RemoveRelatedCellsPossibilities(Possibilities& possibilities, CellsGroup const& relatedCells)
 {
     for(auto const& relatedCell : relatedCells)
     {
-        auto const& lockedPossibilities = relatedCell->GetLockedPossibilities();
+        auto const& relatedCellPossibilities = relatedCell->GetPossibilities();
 
-        boost::range::remove_erase_if(possibilities, [&](Value v){ return lockedPossibilities.m_Possibilities.count(v); });
+        possibilities.RemovePossibilities(relatedCellPossibilities);
+
+        if (possibilities.GetNumberPossibilitiesLeft() == 0)
+            break;
     }
 }
 
-std::optional<Value> FindRelatedCellsMissingPossibility(CellsGroup const& relatedCells, int gridSize, Position const& cellPosition)
+std::optional<Value> FindRelatedCellsMissingPossibility(CellsGroup const& relatedCells, int gridSize)
 {
-    auto possibilities = CreatePossibilities<std::vector<Value>>(gridSize);
+    auto possibilities = Possibilities {gridSize};
 
     RemoveRelatedCellsPossibilities(possibilities, relatedCells);
 
-    if (possibilities.empty())
+    if (possibilities.GetNumberPossibilitiesLeft() == 0)
         return {};
 
-    ValidateOnlyOneMissingPossibility(possibilities, cellPosition);
+    ValidateOnlyOneMissingPossibility(possibilities);
 
-    return possibilities.front();
+    return possibilities.GetValue();
 }
 } // anonymous namespace
 
@@ -60,7 +57,7 @@ UniquePossibilityFinderImpl::UniquePossibilityFinderImpl(
 
 std::optional<Value> UniquePossibilityFinderImpl::FindUniquePossibility(Position const& cellPosition, Grid const& grid) const
 {
-    std::vector<CellsGroup> allRelatedCells {
+    std::array<CellsGroup, 3> allRelatedCells {
         m_RelatedCellsGetter->GetRelatedBlockCells(cellPosition, grid),
         m_RelatedCellsGetter->GetRelatedHorizontalCells(cellPosition, grid),
         m_RelatedCellsGetter->GetRelatedVerticalCells(cellPosition, grid)
@@ -68,7 +65,7 @@ std::optional<Value> UniquePossibilityFinderImpl::FindUniquePossibility(Position
 
     for (const auto& relatedCells : allRelatedCells)
     {
-        auto missingPossibility = FindRelatedCellsMissingPossibility(relatedCells, grid.m_GridSize, cellPosition);
+        auto missingPossibility = FindRelatedCellsMissingPossibility(relatedCells, grid.m_GridSize);
 
         if (missingPossibility)
             return missingPossibility;

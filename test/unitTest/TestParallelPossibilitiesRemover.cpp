@@ -4,6 +4,8 @@
 #include <chrono>
 #include <thread>
 
+#include <boost/range/irange.hpp>
+
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 

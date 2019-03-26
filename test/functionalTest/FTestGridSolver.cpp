@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <boost/range/irange.hpp>
+
 #include "GridSolverFactory.hpp"
 #include "GridStatus.hpp"
 #include "Grid.hpp"

@@ -1,20 +1,48 @@
 #pragma once
 
 #include <unordered_set>
-
-#include <boost/range/irange.hpp>
+#include <bitset>
 
 #include "Value.hpp"
+#include "Constants.hpp"
 
 namespace sudoku
 {
 
-using Possibilities = std::unordered_set<Value>;
-
-template<typename TContainer>
-TContainer CreatePossibilities(int gridSize)
+class Possibilities
 {
-    return boost::copy_range<TContainer>(boost::irange(1, gridSize + 1));
-}
+public:
+    using PossibilitiesBitSet = std::bitset<constants::MaxGridSize>;
+
+    Possibilities(int gridSize);
+
+    Possibilities(Possibilities const& possibilities);
+    Possibilities& operator=(Possibilities const& possibilities);
+
+    void RemovePossibilities(Possibilities const& possibilities);
+
+    void RemovePossibility(Value const& value);
+
+    void SetValue(Value const& value);
+
+    std::optional<Value> GetValue() const;
+
+    int GetNumberPossibilitiesLeft() const;
+
+    bool OnlyOnePossibilityLeft() const;
+
+    bool operator==(Possibilities const& other) const;
+
+    bool operator==(PossibilitiesBitSet const& possibilities) const;
+
+    Value GetPossibilityLeft() const;
+
+private:
+    void RemovePossibilitiesImpl(PossibilitiesBitSet const& possibilities);
+
+    bool OnlyOnePossibilityLeftImpl() const;
+
+    PossibilitiesBitSet m_Possibilities;
+};
 
 } // namespace sudoku

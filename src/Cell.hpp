@@ -1,11 +1,9 @@
 #pragma once
 
 #include <memory>
-#include <shared_mutex>
 
-#include "Possibilities.hpp"
+#include "ThreadSafePossibilities.hpp"
 #include "Position.hpp"
-#include "LockedPossibilites.hpp"
 
 namespace sudoku
 {
@@ -24,7 +22,7 @@ public:
     std::optional<Value> GetValue() const;
 
     bool IsSet() const;
-    LockedPossibilities GetLockedPossibilities() const;
+    Possibilities GetPossibilities() const;
     int GetNumberPossibilitiesLeft() const;
 
     Position const& GetPosition() const;
@@ -32,9 +30,7 @@ public:
     bool operator==(Cell const& cell) const;
 
 private:
-    Possibilities m_Possibilities;
-    mutable std::shared_timed_mutex m_PossibilitiesMutex;
-
+    ThreadSafePossibilities m_Possibilities;
     const Position m_Position;
 };
 

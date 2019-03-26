@@ -1,11 +1,9 @@
 #include "Cell.hpp"
 
-#include <sstream>
-
 using namespace sudoku;
 
 Cell::Cell(Position position, int gridSize) :
-    m_Possibilities(CreatePossibilities<Possibilities>(gridSize)),
+    m_Possibilities(gridSize),
     m_Position(std::move(position))
 {}
 
@@ -23,59 +21,35 @@ Cell& Cell::operator=(Cell const& cell)
 
 void Cell::RemovePossibility(Value const& value)
 {
-    std::unique_lock<std::shared_timed_mutex> writeLock(m_PossibilitiesMutex);
+    m_Possibilities.RemovePossibility(value);
 
-    m_Possibilities.erase(value);
-
-    if (m_Possibilities.empty())
-    {
-        std::stringstream error;
-        error << "Removed last possibility from cell position '" << m_Position << "'";
-        throw std::runtime_error(error.str());
-    }
+    if (m_Possibilities.GetNumberPossibilitiesLeft() == 0)
+        throw std::runtime_error("Removed last possibility from cell");
 }
 
 void Cell::SetValue(Value const& value)
 {
-    std::unique_lock<std::shared_timed_mutex> writeLock(m_PossibilitiesMutex);
-
-    if (!m_Possibilities.count(value))
-    {
-        std::stringstream error;
-        error << "try to set cell '" << m_Position << "', with impossible value '" << value << "'";
-        throw std::runtime_error(error.str());
-    }
-
-    m_Possibilities = {value};
+    m_Possibilities.SetValue(value);
 }
 
 std::optional<Value> Cell::GetValue() const
 {
-    std::shared_lock<std::shared_timed_mutex> readLock(m_PossibilitiesMutex);
-
-    if (m_Possibilities.size() != 1)
-        return {};
-
-    return *m_Possibilities.begin();
+    return m_Possibilities.GetValue();
 }
 
 bool Cell::IsSet() const
 {
-    std::shared_lock<std::shared_timed_mutex> readLock(m_PossibilitiesMutex);
-
-    return m_Possibilities.size() == 1;
+    return m_Possibilities.OnlyOnePossibilityLeft();
 }
 
-LockedPossibilities Cell::GetLockedPossibilities() const
+Possibilities Cell::GetPossibilities() const
 {
-    return LockedPossibilities {m_Possibilities, m_PossibilitiesMutex};
+    return m_Possibilities.GetPossibilities();
 }
 
 int Cell::GetNumberPossibilitiesLeft() const
 {
-    std::shared_lock<std::shared_timed_mutex> readLock(m_PossibilitiesMutex);
-
-    return m_Possibilities.size();
+    return m_Possibilities.GetNumberPossibilitiesLeft();
 }
 
 const Position& Cell::GetPosition() const
@@ -85,6 +59,6 @@ const Position& Cell::GetPosition() const
 
 bool Cell::operator==(Cell const& cell) const
 {
-    return m_Possibilities == cell.m_Possibilities
+    return m_Possibilities.GetPossibilities() == cell.m_Possibilities.GetPossibilities()
             && m_Position == cell.m_Position;
 }
