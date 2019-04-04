@@ -11,7 +11,7 @@ namespace test
 class MockUniquePossibilitySetter : public UniquePossibilitySetter
 {
 public:
-    MOCK_CONST_METHOD3(SetCellsWithUniquePossibility, void(std::vector<SharedCell>& cells, Grid const& grid, FoundCells& foundCells));
+    MOCK_CONST_METHOD3(SetIfUniquePossibility, void(Position const& position, Grid& grid, FoundCells& foundCells));
 };
 
 } /* namespace test */

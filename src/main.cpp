@@ -24,10 +24,12 @@ using namespace sudoku::test;
 //time over 1000 exec : 11'970 micro seconds
 
 //time after Possibilities optimisation: 5'706 micro seconds
+//time after thread pool optimisation: 2'722 micro seconds
 
 //optimisations steps:
 //run profiler on program and modify algorithm in order to delete bottlenek
 //Optimisation of Possibilities class to use bitset instead of unordered_set
+//Optimisation use of thread pool instead of always creating/deleting new threads
 
 
 int main ()
@@ -44,7 +46,7 @@ int main ()
 
     std::vector<int> durations;
 
-    const int testExecutionCount = 5000;
+    const int testExecutionCount = 2000;
     for([[gnu::unused]] int i : boost::irange(0, testExecutionCount))
     {
         auto grid = CreateGrid(gridSize, KeepRandomCells(positionsValues, cellsKept));

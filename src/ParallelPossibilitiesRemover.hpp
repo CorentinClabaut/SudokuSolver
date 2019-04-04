@@ -2,6 +2,8 @@
 
 #include <memory>
 
+#include "ThreadPool.hpp"
+
 namespace sudoku
 {
 
@@ -14,7 +16,7 @@ class ParallelPossibilitiesRemover
 public:
     virtual ~ParallelPossibilitiesRemover() = default;
 
-    virtual void UpdateGrid(FoundCells& foundCells, Grid& grid) const = 0;
+    virtual void UpdateGrid(FoundCells& foundCells, Grid& grid) = 0;
 };
 
 class ParallelPossibilitiesRemoverImpl : public ParallelPossibilitiesRemover
@@ -22,12 +24,15 @@ class ParallelPossibilitiesRemoverImpl : public ParallelPossibilitiesRemover
 public:
     ParallelPossibilitiesRemoverImpl(
             int parallelThreadsCount,
+            std::shared_ptr<ThreadPool> threadPool,
             std::unique_ptr<PossibilitiesRemover> possibilitiesRemover);
 
-    void UpdateGrid(FoundCells& foundCells, Grid& grid) const override;
+    void UpdateGrid(FoundCells& foundCells, Grid& grid) override;
 
 private:
     void RemoveQueuedUnvalidPossibilities(FoundCells& foundCells, Grid& grid, int& threadsWorkingCount, std::atomic<bool>& exception) const;
+
+    std::shared_ptr<ThreadPool> m_ThreadPool;
 
     const int m_ParallelThreadsCount;
 

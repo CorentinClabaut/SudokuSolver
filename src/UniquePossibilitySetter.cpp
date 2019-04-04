@@ -11,20 +11,19 @@ UniquePossibilitySetterImpl::UniquePossibilitySetterImpl(
     m_UniquePossibilityFinder(std::move(uniquePossibilityFinder))
 {}
 
-void UniquePossibilitySetterImpl::SetCellsWithUniquePossibility(std::vector<SharedCell>& cells, Grid const& grid, FoundCells& foundCells) const
+void UniquePossibilitySetterImpl::SetIfUniquePossibility(Position const& position, Grid& grid, FoundCells& foundCells) const
 {
-    for (auto cell : cells)
-    {
-        if (cell->IsSet())
-            continue;
+    auto const& cell = grid.GetCell(position);
 
-        auto uniquePossibility = m_UniquePossibilityFinder->FindUniquePossibility(cell->GetPosition(), grid);
+    if (cell->IsSet())
+        return;
 
-        if (!uniquePossibility)
-            continue;
+    auto uniquePossibility = m_UniquePossibilityFinder->FindUniquePossibility(position, grid);
 
-        cell->SetValue(*uniquePossibility);
+    if (!uniquePossibility)
+        return;
 
-        foundCells.Enqueue(cell);
-    }
+    cell->SetValue(*uniquePossibility);
+
+    foundCells.Enqueue(cell);
 }

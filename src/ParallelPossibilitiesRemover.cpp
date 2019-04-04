@@ -13,24 +13,43 @@ using namespace sudoku;
 
 ParallelPossibilitiesRemoverImpl::ParallelPossibilitiesRemoverImpl(
         int parallelThreadsCount,
+        std::shared_ptr<ThreadPool> threadPool,
         std::unique_ptr<PossibilitiesRemover> possibilitiesRemover) :
+    m_ThreadPool(threadPool),
     m_ParallelThreadsCount(parallelThreadsCount),
     m_PossibilitiesRemover(std::move(possibilitiesRemover))
 {}
 
-void ParallelPossibilitiesRemoverImpl::UpdateGrid(FoundCells& foundCells, Grid& grid) const
+void ParallelPossibilitiesRemoverImpl::UpdateGrid(FoundCells& foundCells, Grid& grid)
 {
     int threadsWorkingCount = 0;
 
-    std::atomic<bool> exception {false};
-    std::vector<std::future<void>> futures(m_ParallelThreadsCount);
-    for (auto& future : futures)
-        future = std::async([&]{ RemoveQueuedUnvalidPossibilities(foundCells, grid, threadsWorkingCount, exception); });
+    std::atomic<int> threadsFinished {0};
+    std::atomic<bool> exceptionThrown {false};
 
-    boost::for_each(futures, [](auto& f){ f.get(); });
+    std::mutex m;
+    auto cv = std::make_shared<std::condition_variable>();
 
-    if (exception)
-        throw std::runtime_error("Thread throw exception while removing unvalid possibilities");
+    for (int threadId = 0; threadId < m_ParallelThreadsCount; threadId++)
+    {
+        auto threadWork = [&, threadId]
+        {
+            RemoveQueuedUnvalidPossibilities(foundCells, grid, threadsWorkingCount, exceptionThrown);
+
+            std::unique_lock<std::mutex> lk(m);
+            threadsFinished++;
+            if (threadsFinished == m_ParallelThreadsCount)
+                cv->notify_one();
+        };
+
+        m_ThreadPool->Enqueue(threadWork);
+    }
+
+    std::unique_lock<std::mutex> lk(m);
+    cv->wait(lk, [this, &threadsFinished]{ return threadsFinished == m_ParallelThreadsCount; });
+
+    if (exceptionThrown)
+        throw std::runtime_error("UpdateGrid Exception");
 }
 
 void ParallelPossibilitiesRemoverImpl::RemoveQueuedUnvalidPossibilities(FoundCells& foundCells, Grid& grid, int& threadsWorkingCount, std::atomic<bool>& exception) const
@@ -60,7 +79,7 @@ void ParallelPossibilitiesRemoverImpl::RemoveQueuedUnvalidPossibilities(FoundCel
             {
                 m_PossibilitiesRemover->UpdateGrid(**newFoundCell, grid, foundCells);
             }
-            catch(std::exception const& e)
+            catch(std::exception const&)
             {
                 exception = true;
             }

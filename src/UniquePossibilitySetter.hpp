@@ -16,7 +16,7 @@ class UniquePossibilitySetter
 public:
     virtual ~UniquePossibilitySetter() = default;
 
-    virtual void SetCellsWithUniquePossibility(std::vector<SharedCell>& cells, Grid const& grid, FoundCells& foundCells) const = 0;
+    virtual void SetIfUniquePossibility(Position const& position, Grid& grid, FoundCells& foundCells) const = 0;
 };
 
 class UniquePossibilitySetterImpl : public UniquePossibilitySetter
@@ -25,7 +25,7 @@ public:
     UniquePossibilitySetterImpl(
             std::unique_ptr<UniquePossibilityFinder> uniquePossibilityFinder);
 
-    void SetCellsWithUniquePossibility(std::vector<SharedCell>& cells, Grid const& grid, FoundCells& foundCells) const override;
+    void SetIfUniquePossibility(Position const& position, Grid& grid, FoundCells& foundCells) const override;
 
 private:
     std::unique_ptr<UniquePossibilityFinder> m_UniquePossibilityFinder;

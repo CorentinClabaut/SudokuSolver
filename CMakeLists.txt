@@ -31,6 +31,8 @@ add_library(sudoku_lib STATIC
 
 target_link_libraries(sudoku_lib
     pthread
+    boost_system
+    boost_thread
 )
 
 # Executable
@@ -41,7 +43,6 @@ add_executable(sudoku_solver
 
 target_link_libraries(sudoku_solver
     sudoku_lib
-    pthread
     profiler
 )
 
@@ -60,7 +61,6 @@ add_executable(sudoku_test
 target_link_libraries(sudoku_test
     gmock
     gtest
-    pthread
     sudoku_lib
     )
     

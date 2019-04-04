@@ -12,6 +12,7 @@
 #include "FoundCells.hpp"
 #include "Grid.hpp"
 #include "utils/Utils.hpp"
+#include "ThreadPool.hpp"
 
 #include "mock/MockPossibilitiesRemover.hpp"
 
@@ -37,6 +38,7 @@ public:
     {
         return std::make_unique<ParallelPossibilitiesRemoverImpl>(
                     parallelThreadsCount,
+                    std::make_shared<ThreadPool>(parallelThreadsCount),
                     std::move(m_PossibilitiesRemover));
     }
 
@@ -138,7 +140,7 @@ TEST_F(TestParallelPossibilitiesRemover, NewCellsFoundByThreadProcessedByOtherTh
 
 TEST_F(TestParallelPossibilitiesRemover, AllThreadsStopCorrectlyIfOneThreadStopAfterCatchingAnException)
 {
-    const int testExecutionCount = 20;
+    const int testExecutionCount = 50;
     for([[gnu::unused]] int i : boost::irange(0, testExecutionCount))
     {
         m_PossibilitiesRemover = std::make_unique<StrictMock<MockPossibilitiesRemover>>();
@@ -151,7 +153,7 @@ TEST_F(TestParallelPossibilitiesRemover, AllThreadsStopCorrectlyIfOneThreadStopA
         m_FoundCells->m_Queue.push(m_Grid.m_Cells[0][3]);
 
         EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[0][0]), Ref(m_Grid), Ref(*m_FoundCells)))
-                .WillOnce(Invoke([this](Cell const&, Grid&, FoundCells&)
+                .WillRepeatedly(Invoke([this](Cell const&, Grid&, FoundCells&)
                     {
                         std::this_thread::sleep_for(std::chrono::milliseconds((rand() % 5) + 1));
                     }));
@@ -164,13 +166,13 @@ TEST_F(TestParallelPossibilitiesRemover, AllThreadsStopCorrectlyIfOneThreadStopA
                     }));
 
         EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[0][2]), Ref(m_Grid), Ref(*m_FoundCells)))
-                .WillOnce(Invoke([this](Cell const&, Grid&, FoundCells&)
+                .WillRepeatedly(Invoke([this](Cell const&, Grid&, FoundCells&)
                     {
                         std::this_thread::sleep_for(std::chrono::milliseconds((rand() % 5) + 1));
                     }));
 
         EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[0][3]), Ref(m_Grid), Ref(*m_FoundCells)))
-                .WillOnce(Invoke([this](Cell const&, Grid&, FoundCells&)
+                .WillRepeatedly(Invoke([this](Cell const&, Grid&, FoundCells&)
                     {
                         std::this_thread::sleep_for(std::chrono::milliseconds((rand() % 5) + 1));
                     }));
