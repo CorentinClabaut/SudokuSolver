@@ -4,7 +4,7 @@
 #include <thread>
 
 #include <boost/range/irange.hpp>
-#include <boost/range/numeric.hpp>
+#include <boost/range/algorithm.hpp>
 
 #include "GridSolverFactory.hpp"
 #include "GridStatus.hpp"
@@ -16,21 +16,25 @@
 using namespace sudoku;
 using namespace sudoku::test;
 
-//cellsKept 20
-//6 threads
-//time over 1000 exec : 28'857 micro seconds
+// Benchmark for solving 9x9 Sudoku with 20 cells set at the beginning
 
-//after few algo improvement and stop checking status in SolverWithoutHypothesis.
-//time over 1000 exec : 11'970 micro seconds
+// Optimisations steps:
+// 1) Improvement in the way the detection of wrong new cells was made.
+// 2) Optimisation of Possibilities class to use bitset instead of unordered_set
+// 3) Utilisation of thread pool instead of always creating/deleting new threads
 
-//time after Possibilities optimisation: 5'706 micro seconds
-//time after thread pool optimisation: 2'722 micro seconds
+// Execution time
+// Before any optimisation: 28'857 micro seconds
+// optimisation 1: 11'970 micro seconds
+// optimisation 2: 5'706 micro seconds
+// optimisation 3: 2'648 micro seconds
 
-//optimisations steps:
-//run profiler on program and modify algorithm in order to delete bottlenek
-//Optimisation of Possibilities class to use bitset instead of unordered_set
-//Optimisation use of thread pool instead of always creating/deleting new threads
-
+int GetMedian(std::vector<int> v)
+{
+    const auto middle = v.size() / 2;
+    std::nth_element(v.begin(), v.begin() + middle, v.end());
+    return v[middle];
+}
 
 int main ()
 {
@@ -46,7 +50,7 @@ int main ()
 
     std::vector<int> durations;
 
-    const int testExecutionCount = 2000;
+    const int testExecutionCount = 5'000;
     for([[gnu::unused]] int i : boost::irange(0, testExecutionCount))
     {
         auto grid = CreateGrid(gridSize, KeepRandomCells(positionsValues, cellsKept));
@@ -71,7 +75,16 @@ int main ()
 
     std::cout << "thread number: " << parallelThreadsCount << std::endl;
     std::cout << "number of execution: " << durations.size() << std::endl;
-    std::cout << "mean duration: " << boost::accumulate(durations, 0) / durations.size() << " micro seconds" << std::endl;
+
+    const auto median = GetMedian(durations);
+
+    std::vector<int> absDeviations(durations.size());
+    boost::transform(durations, absDeviations.begin(), [median](int val){ return std::abs(val - median); });
+
+    const auto mad = GetMedian(std::move(absDeviations));
+
+    std::cout << "median duration: " << median << " micro seconds" << std::endl;
+    std::cout << "median absolute deviation duration: " << mad << " micro seconds" << std::endl;
 
     return 0;
 }
