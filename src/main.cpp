@@ -22,12 +22,15 @@ using namespace sudoku::test;
 // 1) Improvement in the way the detection of wrong new cells was made.
 // 2) Optimisation of Possibilities class to use bitset instead of unordered_set
 // 3) Utilisation of thread pool instead of always creating/deleting new threads
+// 3) Grid stores Cells instead of shared_ptr of Cells to avoid indirection
 
 // Execution time
 // Before any optimisation: 28'857 micro seconds
 // optimisation 1: 11'970 micro seconds
 // optimisation 2: 5'706 micro seconds
 // optimisation 3: 2'648 micro seconds
+// optimisation 3: 1'935 micro seconds
+// Grid vector of cells instead of ptr of cells: 2'066 micro seconds
 
 int GetMedian(std::vector<int> v)
 {
@@ -50,7 +53,7 @@ int main ()
 
     std::vector<int> durations;
 
-    const int testExecutionCount = 5'000;
+    const int testExecutionCount = 2'000;
     for([[gnu::unused]] int i : boost::irange(0, testExecutionCount))
     {
         auto grid = CreateGrid(gridSize, KeepRandomCells(positionsValues, cellsKept));

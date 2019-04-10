@@ -1,21 +1,35 @@
 #include "PossibilitiesRemover.hpp"
 
+#include <sstream>
+
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/range.hpp>
 
 #include "Grid.hpp"
 #include "Cell.hpp"
-#include "RelatedCellsGetter.hpp"
-#include "FoundCells.hpp"
+#include "Position.hpp"
+#include "RelatedPositionsGetter.hpp"
+#include "FoundPositions.hpp"
 
 using namespace sudoku;
 
 namespace
 {
 
-auto PartitionFoundAndNotFoundCells(std::vector<SharedCell>& cells)
+std::vector<std::reference_wrapper<Cell>> GetCells(std::vector<Position> const& positions, Grid& grid)
 {
-    const auto middle = std::partition(cells.begin(), cells.end(), [](auto const& cell){ return cell->IsSet(); });
+    std::vector<std::reference_wrapper<Cell>> cells;
+    cells.reserve(positions.size());
+
+    std::transform(positions.begin(), positions.end(), std::back_inserter(cells),
+                   [&grid](auto const& p){ return std::ref(grid.GetCell(p)); });
+
+    return cells;
+}
+
+auto PartitionFoundAndNotFoundCells(std::vector<std::reference_wrapper<Cell>>& cells)
+{
+    const auto middle = std::partition(cells.begin(), cells.end(), [](Cell const& c){ return c.IsSet(); });
 
     return std::pair{boost::make_iterator_range(cells.begin(), middle), boost::make_iterator_range(middle, cells.end())};
 }
@@ -23,46 +37,47 @@ auto PartitionFoundAndNotFoundCells(std::vector<SharedCell>& cells)
 template<typename TRange>
 void ValidateNoFoundCellSetWithValue(TRange const& foundRelatedCells, Value foundValue)
 {
-    if (boost::algorithm::any_of(foundRelatedCells, [foundValue](const auto cell){ return cell->GetValue() == foundValue; }))
+    if (boost::algorithm::any_of(foundRelatedCells, [foundValue](Cell const& c){ return c.GetValue() == foundValue; }))
         throw std::runtime_error("related cell already has new found cell value.");
 }
 
 template<typename TRange>
-void UpdateRelatedCellsPossibilities(TRange const& notFoundRelatedCells, Value foundValue, FoundCells& foundCells)
+void UpdateRelatedCellsPossibilities(TRange const& notFoundRelatedCells, Value foundValue, FoundPositions& foundPositions)
 {
-    for (auto cell : notFoundRelatedCells)
+    for (Cell& cell : notFoundRelatedCells)
     {
-        cell->RemovePossibility(foundValue);
+        cell.RemovePossibility(foundValue);
 
-        if (cell->IsSet())
+        if (cell.IsSet())
         {
-            foundCells.Enqueue(cell);
+            foundPositions.Enqueue(cell.GetPosition());
         }
     }
 }
 
 } // anonymous namespace
 
-PossibilitiesRemoverImpl::PossibilitiesRemoverImpl(std::unique_ptr<RelatedCellsGetter> relatedCellsGetter) :
-    m_RelatedCellsGetter(std::move(relatedCellsGetter))
+PossibilitiesRemoverImpl::PossibilitiesRemoverImpl(std::unique_ptr<RelatedPositionsGetter> relatedPositionsGetter) :
+    m_RelatedPositionsGetter(std::move(relatedPositionsGetter))
 {}
 
-void PossibilitiesRemoverImpl::UpdateGrid(Cell const& newFoundCell, Grid& grid, FoundCells& foundCells) const
+void PossibilitiesRemoverImpl::UpdateGrid(Position const& newFoundPosition, Grid& grid, FoundPositions& foundPositions) const
 {
-    const auto foundValue = newFoundCell.GetValue();
+    const auto foundValue = grid.GetCell(newFoundPosition).GetValue();
 
     if (!foundValue)
     {
         std::stringstream error;
-        error << "Can't update grid possibilities because: cell '" << newFoundCell.GetPosition() << "' has no value set";
+        error << "Can't update grid possibilities because: cell '" << newFoundPosition << "' has no value set";
         throw std::runtime_error(error.str());
     }
 
-    auto relatedCells = m_RelatedCellsGetter->GetAllRelatedCells(newFoundCell.GetPosition(), grid);
+    const auto relatedPositions = m_RelatedPositionsGetter->GetAllRelatedPositions(newFoundPosition, grid.GetGridSize(), grid.GetBlockSize());
+    auto relatedCells = GetCells(relatedPositions, grid);
 
     const auto& [relatedFoundCells, relatedNotFoundCells] = PartitionFoundAndNotFoundCells(relatedCells);
 
     ValidateNoFoundCellSetWithValue(relatedFoundCells, *foundValue);
 
-    UpdateRelatedCellsPossibilities(relatedNotFoundCells, *foundValue, foundCells);
+    UpdateRelatedCellsPossibilities(relatedNotFoundCells, *foundValue, foundPositions);
 }

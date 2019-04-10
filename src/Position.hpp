@@ -1,6 +1,7 @@
 #pragma once
 
-#include "ostream"
+#include <ostream>
+#include <functional>
 
 namespace sudoku
 {

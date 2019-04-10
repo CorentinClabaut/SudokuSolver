@@ -8,7 +8,7 @@ namespace sudoku
 {
 
 class Grid;
-class FoundCells;
+class FoundPositions;
 class UniquePossibilitySetter;
 
 class ParallelUniquePossibilitySetter
@@ -16,7 +16,7 @@ class ParallelUniquePossibilitySetter
 public:
     virtual ~ParallelUniquePossibilitySetter() = default;
 
-    virtual void SetCellsWithUniquePossibility(Grid& grid, FoundCells& foundCells) = 0;
+    virtual void SetCellsWithUniquePossibility(Grid& grid, FoundPositions& foundPositions) = 0;
 };
 
 class ParallelUniquePossibilitySetterImpl : public ParallelUniquePossibilitySetter
@@ -27,7 +27,7 @@ public:
             std::shared_ptr<ThreadPool> threadPool,
             std::unique_ptr<UniquePossibilitySetter> uniquePossibilitySetter);
 
-    void SetCellsWithUniquePossibility(Grid& grid, FoundCells& foundCells) override;
+    void SetCellsWithUniquePossibility(Grid& grid, FoundPositions& foundPositions) override;
 
 private:
     std::shared_ptr<ThreadPool> m_ThreadPool;

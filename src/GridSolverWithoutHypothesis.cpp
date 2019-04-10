@@ -2,7 +2,7 @@
 
 #include "ParallelPossibilitiesRemover.hpp"
 #include "ParallelUniquePossibilitySetter.hpp"
-#include "FoundCells.hpp"
+#include "FoundPositions.hpp"
 #include "GridStatus.hpp"
 #include "Grid.hpp"
 
@@ -12,7 +12,7 @@ namespace
 {
 bool AreAllCellsSet(Grid const& grid)
 {
-    return std::all_of(grid.begin(), grid.end(), [](auto const& cell){ return cell->IsSet(); });
+    return std::all_of(grid.begin(), grid.end(), [](auto const& cell){ return cell.IsSet(); });
 }
 } // anonymous namespace
 
@@ -23,24 +23,24 @@ GridSolverWithoutHypothesisImpl::GridSolverWithoutHypothesisImpl(
     m_ParallelUniquePossibilitySetter(std::move(parallelUniquePossibilitySetter))
 {}
 
-GridStatus GridSolverWithoutHypothesisImpl::Solve(Grid& grid, FoundCells& foundCells) const
+GridStatus GridSolverWithoutHypothesisImpl::Solve(Grid& grid, FoundPositions& foundPositions) const
 {
-    if (foundCells.m_Queue.empty())
+    if (foundPositions.m_Queue.empty())
         throw std::runtime_error("Can't solve without hypothesis if no cell has been found");
 
     try
     {
-        while(!foundCells.m_Queue.empty())
+        while(!foundPositions.m_Queue.empty())
         {
-            m_ParallelPossibilitiesRemover->UpdateGrid(foundCells, grid);
+            m_ParallelPossibilitiesRemover->UpdateGrid(foundPositions, grid);
 
-            m_ParallelUniquePossibilitySetter->SetCellsWithUniquePossibility(grid, foundCells);
+            m_ParallelUniquePossibilitySetter->SetCellsWithUniquePossibility(grid, foundPositions);
         }
     }
     catch(std::exception const&)
     {
-        while(!foundCells.m_Queue.empty())
-            foundCells.m_Queue.pop();
+        while(!foundPositions.m_Queue.empty())
+            foundPositions.m_Queue.pop();
 
         return GridStatus::Wrong;
     }

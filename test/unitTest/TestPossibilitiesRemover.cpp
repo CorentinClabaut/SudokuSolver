@@ -5,9 +5,9 @@
 
 #include "utils/Utils.hpp"
 
-#include "FoundCells.hpp"
+#include "FoundPositions.hpp"
 
-#include "mock/MockRelatedCellsGetter.hpp"
+#include "mock/MockRelatedPositionsGetter.hpp"
 
 using testing::_;
 using testing::Eq;
@@ -27,14 +27,15 @@ public:
     TestPossibilitiesRemover()
     {}
 
-    void SetupCel1x1RelatedCellsGetter(Grid& grid)
+    void SetupCel1x1RelatedPositionsGetter()
     {
-        m_RelatedCellsGetter->ExpectGetAllRelatedCells(grid, {1, 1}, {{1, 0}, {1, 2}, {1, 3}, {0, 1}, {2, 1}, {3, 1}, {0, 0}});
+        EXPECT_CALL(*m_RelatedPositionsGetter, GetAllRelatedPositions(Position{1, 1}, 4, 2))
+                    .WillRepeatedly(Return(std::vector<Position>{{1, 0}, {1, 2}, {1, 3}, {0, 1}, {2, 1}, {3, 1}, {0, 0}}));
     }
 
     std::unique_ptr<PossibilitiesRemover> MakePossibilitiesRemover()
     {
-        return std::make_unique<PossibilitiesRemoverImpl>(std::move(m_RelatedCellsGetter));
+        return std::make_unique<PossibilitiesRemoverImpl>(std::move(m_RelatedPositionsGetter));
     }
 
     template<typename T>
@@ -57,21 +58,21 @@ public:
     {
         Grid grid(m_GridSize);
 
-        grid.m_Cells[1][1]->SetValue(value);
-        grid.m_Cells[1][0]->RemovePossibility(value);
-        grid.m_Cells[1][2]->RemovePossibility(value);
-        grid.m_Cells[1][3]->RemovePossibility(value);
-        grid.m_Cells[0][1]->RemovePossibility(value);
-        grid.m_Cells[2][1]->RemovePossibility(value);
-        grid.m_Cells[3][1]->RemovePossibility(value);
-        grid.m_Cells[0][0]->RemovePossibility(value);
+        grid.GetCell(Position{1, 1}).SetValue(value);
+        grid.GetCell(Position{1, 0}).RemovePossibility(value);
+        grid.GetCell(Position{1, 2}).RemovePossibility(value);
+        grid.GetCell(Position{1, 3}).RemovePossibility(value);
+        grid.GetCell(Position{0, 1}).RemovePossibility(value);
+        grid.GetCell(Position{2, 1}).RemovePossibility(value);
+        grid.GetCell(Position{3, 1}).RemovePossibility(value);
+        grid.GetCell(Position{0, 0}).RemovePossibility(value);
 
         return grid;
     }
 
     const int m_GridSize {4};
 
-    std::unique_ptr<MockRelatedCellsGetter> m_RelatedCellsGetter = std::make_unique<MockRelatedCellsGetter>();
+    std::unique_ptr<MockRelatedPositionsGetter> m_RelatedPositionsGetter = std::make_unique<MockRelatedPositionsGetter>();
 };
 
 TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells)
@@ -79,20 +80,21 @@ TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells)
     const Value cellValue {3};
 
     Grid grid {m_GridSize};
-    FoundCells foundCells;
+    FoundPositions foundPositions;
 
-    SetupCel1x1RelatedCellsGetter(grid);
+    SetupCel1x1RelatedPositionsGetter();
 
-    auto cell = grid.m_Cells[1][1];
-    cell->SetValue(cellValue);
+    Position currentPosition {1, 1};
+    auto& cell = grid.GetCell(currentPosition);
+    cell.SetValue(cellValue);
 
-    MakePossibilitiesRemover()->UpdateGrid(*cell, grid, foundCells);
+    MakePossibilitiesRemover()->UpdateGrid(currentPosition, grid, foundPositions);
 
     auto expectedGrid = CreateExpectedGridWithValuePos1x1SetTo(cellValue);
 
     EXPECT_THAT(grid, Eq(expectedGrid));
 
-    EXPECT_TRUE(foundCells.m_Queue.empty());
+    EXPECT_TRUE(foundPositions.m_Queue.empty());
 }
 
 TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells_RelatedCellNotIdentical)
@@ -100,24 +102,25 @@ TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells_RelatedCellNotId
     const Value cellValue {3};
 
     Grid grid {m_GridSize};
-    FoundCells foundCells;
+    FoundPositions foundPositions;
 
-    SetupCel1x1RelatedCellsGetter(grid);
+    SetupCel1x1RelatedPositionsGetter();
 
-    auto cell = grid.m_Cells[1][1];
-    cell->SetValue(cellValue);
+    Position currentPosition {1, 1};
+    auto& cell = grid.GetCell(currentPosition);
+    cell.SetValue(cellValue);
 
     const Value otherCellFoundValue {1};
-    grid.m_Cells[0][0]->SetValue(otherCellFoundValue);
+    grid.GetCell(Position{0, 0}).SetValue(otherCellFoundValue);
 
-    MakePossibilitiesRemover()->UpdateGrid(*cell, grid, foundCells);
+    MakePossibilitiesRemover()->UpdateGrid(currentPosition, grid, foundPositions);
 
     auto expectedGrid = CreateExpectedGridWithValuePos1x1SetTo(cellValue);
-    expectedGrid.m_Cells[0][0]->SetValue(otherCellFoundValue);
+    expectedGrid.GetCell(Position{0, 0}).SetValue(otherCellFoundValue);
 
     EXPECT_THAT(grid, Eq(expectedGrid));
 
-    EXPECT_TRUE(foundCells.m_Queue.empty());
+    EXPECT_TRUE(foundPositions.m_Queue.empty());
 }
 
 TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells_RelatedCellAlreadySetWithSameValue)
@@ -125,16 +128,17 @@ TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells_RelatedCellAlrea
     const Value cellValue {3};
 
     Grid grid {m_GridSize};
-    FoundCells foundCells;
+    FoundPositions foundPositions;
 
-    SetupCel1x1RelatedCellsGetter(grid);
+    SetupCel1x1RelatedPositionsGetter();
 
-    auto cell = grid.m_Cells[1][1];
-    cell->SetValue(cellValue);
+    Position currentPosition {1, 1};
+    auto& cell = grid.GetCell(currentPosition);
+    cell.SetValue(cellValue);
 
-    grid.m_Cells[0][0]->SetValue(cellValue);
+    grid.GetCell(Position{0, 0}).SetValue(cellValue);
 
-    EXPECT_THROW(MakePossibilitiesRemover()->UpdateGrid(*cell, grid, foundCells), std::exception);
+    EXPECT_THROW(MakePossibilitiesRemover()->UpdateGrid(currentPosition, grid, foundPositions), std::exception);
 }
 
 TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells_FindNewCellValue)
@@ -142,36 +146,37 @@ TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells_FindNewCellValue
     const Value cellValue {3};
 
     Grid grid {m_GridSize};
-    FoundCells foundCells;
+    FoundPositions foundPositions;
 
-    SetupCel1x1RelatedCellsGetter(grid);
+    SetupCel1x1RelatedPositionsGetter();
 
-    auto cell = grid.m_Cells[1][1];
-    cell->SetValue(cellValue);
+    Position currentPosition {1, 1};
+    auto& cell = grid.GetCell(currentPosition);
+    cell.SetValue(cellValue);
 
     const Value NewFoundValue {2};
-    RemoveAllCellPossibilitiesBut(*grid.m_Cells[1][3], {cellValue, NewFoundValue});
+    RemoveAllCellPossibilitiesBut(grid.GetCell(Position{1, 3}), {cellValue, NewFoundValue});
 
-    MakePossibilitiesRemover()->UpdateGrid(*cell, grid, foundCells);
+    MakePossibilitiesRemover()->UpdateGrid(currentPosition, grid, foundPositions);
 
     auto expectedGrid = CreateExpectedGridWithValuePos1x1SetTo(cellValue);
-    expectedGrid.m_Cells[1][3]->SetValue(NewFoundValue);
+    expectedGrid.GetCell(Position{1, 3}).SetValue(NewFoundValue);
 
     EXPECT_THAT(grid, Eq(expectedGrid));
 
-    ExpectQueueEqual(foundCells.m_Queue, {grid.m_Cells[1][3]});
+    ExpectQueueEqual(foundPositions.m_Queue, {Position {1, 3}});
 }
 
 TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells_CellValueNotSet)
 {
     Grid grid {m_GridSize};
-    FoundCells foundCells;
+    FoundPositions foundPositions;
 
-    SetupCel1x1RelatedCellsGetter(grid);
+    SetupCel1x1RelatedPositionsGetter();
 
-    auto cell = grid.m_Cells[1][1];
+    Position currentPosition {1, 1};
 
-    EXPECT_THROW(MakePossibilitiesRemover()->UpdateGrid(*cell, grid, foundCells), std::exception);
+    EXPECT_THROW(MakePossibilitiesRemover()->UpdateGrid(currentPosition, grid, foundPositions), std::exception);
 }
 
 } /* namespace test */

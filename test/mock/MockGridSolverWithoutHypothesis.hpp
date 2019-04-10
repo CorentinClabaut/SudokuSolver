@@ -11,7 +11,7 @@ namespace test
 class MockGridSolverWithoutHypothesis : public GridSolverWithoutHypothesis
 {
 public:
-    MOCK_CONST_METHOD2(Solve, GridStatus(Grid& grid, FoundCells& foundCells));
+    MOCK_CONST_METHOD2(Solve, GridStatus(Grid& grid, FoundPositions& foundPositions));
 };
 
 } /* namespace test */

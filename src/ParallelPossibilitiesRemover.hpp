@@ -8,7 +8,7 @@ namespace sudoku
 {
 
 class PossibilitiesRemover;
-class FoundCells;
+class FoundPositions;
 class Grid;
 
 class ParallelPossibilitiesRemover
@@ -16,7 +16,7 @@ class ParallelPossibilitiesRemover
 public:
     virtual ~ParallelPossibilitiesRemover() = default;
 
-    virtual void UpdateGrid(FoundCells& foundCells, Grid& grid) = 0;
+    virtual void UpdateGrid(FoundPositions& foundPositions, Grid& grid) = 0;
 };
 
 class ParallelPossibilitiesRemoverImpl : public ParallelPossibilitiesRemover
@@ -27,10 +27,10 @@ public:
             std::shared_ptr<ThreadPool> threadPool,
             std::unique_ptr<PossibilitiesRemover> possibilitiesRemover);
 
-    void UpdateGrid(FoundCells& foundCells, Grid& grid) override;
+    void UpdateGrid(FoundPositions& foundPositions, Grid& grid) override;
 
 private:
-    void RemoveQueuedUnvalidPossibilities(FoundCells& foundCells, Grid& grid, int& threadsWorkingCount, std::atomic<bool>& exception) const;
+    void RemoveQueuedUnvalidPossibilities(FoundPositions& foundPositions, Grid& grid, int& threadsWorkingCount, std::atomic<bool>& exception) const;
 
     std::shared_ptr<ThreadPool> m_ThreadPool;
 

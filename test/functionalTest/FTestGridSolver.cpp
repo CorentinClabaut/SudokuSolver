@@ -8,7 +8,7 @@
 #include "Grid.hpp"
 #include "utils/Utils.hpp"
 #include "GridStatusGetter.hpp"
-#include "RelatedCellsGetter.hpp"
+#include "RelatedPositionsGetter.hpp"
 
 using testing::Eq;
 using testing::Ne;
@@ -22,7 +22,7 @@ class FTestGridSolver : public ::testing::Test
 {
 public:
     FTestGridSolver() :
-        m_GridStatusGetter(std::make_unique<RelatedCellsGetterImpl>())
+        m_GridStatusGetter(std::make_unique<RelatedPositionsGetterImpl>())
     {}
 
     GridStatusGetterImpl m_GridStatusGetter;

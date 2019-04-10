@@ -1,7 +1,7 @@
 #include "GridSolverWithHypothesis.hpp"
 
 #include "GridSolverWithoutHypothesis.hpp"
-#include "FoundCells.hpp"
+#include "FoundPositions.hpp"
 #include "GridStatus.hpp"
 #include "Grid.hpp"
 
@@ -12,12 +12,12 @@ using namespace sudoku;
 namespace
 {
 
-void GetFoundCells(Grid const& grid, FoundCells& foundCells)
+void GetFoundPositions(Grid const& grid, FoundPositions& foundPositions)
 {
     for (auto cell : grid)
     {
-        if (cell->IsSet())
-            foundCells.m_Queue.push(cell);
+        if (cell.IsSet())
+            foundPositions.m_Queue.push(cell.GetPosition());
     }
 }
 
@@ -28,7 +28,7 @@ Position SelectBestPositionForHypothesis(Grid const& grid)
 
     for (auto const& cell : grid)
     {
-        const auto possibilitiesCount = cell->GetNumberPossibilitiesLeft();
+        const auto possibilitiesCount = cell.GetNumberPossibilitiesLeft();
 
         if (possibilitiesCount == 1)
             continue;
@@ -36,7 +36,7 @@ Position SelectBestPositionForHypothesis(Grid const& grid)
         if (possibilitiesCount < minimumNumberPossibilities)
         {
             minimumNumberPossibilities = possibilitiesCount;
-            bestPosition = cell->GetPosition();
+            bestPosition = cell.GetPosition();
         }
     }
 
@@ -48,27 +48,27 @@ Position SelectBestPositionForHypothesis(Grid const& grid)
 
 Value SelectHypothesisValue(Grid& grid, Position const& hypothesisCellPosition)
 {
-    auto const& possibilities = grid.GetCell(hypothesisCellPosition)->GetPossibilities();
+    auto const& possibilities = grid.GetCell(hypothesisCellPosition).GetPossibilities();
 
     return possibilities.GetPossibilityLeft();
 }
 
-void SetHypotheticCellValue(Grid& grid, FoundCells& foundCells, Position const& hypothesisCellPosition, Value valueToTry)
+void SetHypotheticCellValue(Grid& grid, FoundPositions& foundPositions, Position const& hypothesisCellPosition, Value valueToTry)
 {
-    auto hypothesisCell = grid.GetCell(hypothesisCellPosition);
+    auto& hypothesisCell = grid.GetCell(hypothesisCellPosition);
 
-    hypothesisCell->SetValue(valueToTry);
-    foundCells.Enqueue(hypothesisCell);
+    hypothesisCell.SetValue(valueToTry);
+    foundPositions.Enqueue(hypothesisCell.GetPosition());
 }
 
 bool CellHasOnlyOnePossibilityLeft(Grid& grid, Position const& position)
 {
-    return grid.GetCell(position)->GetNumberPossibilitiesLeft() == 1;
+    return grid.GetCell(position).GetNumberPossibilitiesLeft() == 1;
 }
 
 void RemoveWrongHypotheticCellValue(Grid& gridBeforeHypothesis, Position const& hypothesisCellPosition, Value triedValue)
 {
-    gridBeforeHypothesis.GetCell(hypothesisCellPosition)->RemovePossibility(triedValue);
+    gridBeforeHypothesis.GetCell(hypothesisCellPosition).RemovePossibility(triedValue);
 }
 
 } // anonymous namespace
@@ -80,15 +80,15 @@ GridSolverWithHypothesisImpl::GridSolverWithHypothesisImpl(
 
 bool GridSolverWithHypothesisImpl::Solve(Grid& grid) const
 {
-    FoundCells foundCells;
-    GetFoundCells(grid, foundCells);
+    FoundPositions foundPositions;
+    GetFoundPositions(grid, foundPositions);
 
-    return SolveWithtHypothesis(grid, foundCells);
+    return SolveWithtHypothesis(grid, foundPositions);
 }
 
-bool GridSolverWithHypothesisImpl::SolveWithtHypothesis(Grid& grid, FoundCells& foundCells) const
+bool GridSolverWithHypothesisImpl::SolveWithtHypothesis(Grid& grid, FoundPositions& foundPositions) const
 {
-    auto status = m_GridSolverWithoutHypothesis->Solve(grid, foundCells);
+    auto status = m_GridSolverWithoutHypothesis->Solve(grid, foundPositions);
 
     if (status == GridStatus::SolvedCorrectly)
         return true;
@@ -104,9 +104,9 @@ bool GridSolverWithHypothesisImpl::SolveWithtHypothesis(Grid& grid, FoundCells& 
     {
         const auto triedValue = SelectHypothesisValue(grid, hypothesisCellPosition);
 
-        SetHypotheticCellValue(grid, foundCells, hypothesisCellPosition, triedValue);
+        SetHypotheticCellValue(grid, foundPositions, hypothesisCellPosition, triedValue);
 
-        bool solvedCorrectly = SolveWithtHypothesis(grid, foundCells);
+        bool solvedCorrectly = SolveWithtHypothesis(grid, foundPositions);
 
         if (solvedCorrectly)
             return true;

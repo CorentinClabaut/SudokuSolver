@@ -1,5 +1,7 @@
 #include "Grid.hpp"
 
+#include <cmath>
+
 #include <boost/range/irange.hpp>
 
 namespace sudoku
@@ -14,7 +16,7 @@ constexpr char EmptyCellChar = '*';
 namespace
 {
 
-int GetBlockSize(int gridSize)
+int CalculateBlockSize(int gridSize)
 {
     auto blockSize = sqrt(gridSize);
 
@@ -57,10 +59,11 @@ void PrintCell(std::ostream& os, Cell const& cell)
 } // anonymous namespace
 
 Grid::Grid(int gridSize) :
-    m_Cells(boost::extents[gridSize][gridSize]),
     m_GridSize(gridSize),
-    m_BlockSize(GetBlockSize(gridSize))
+    m_BlockSize(CalculateBlockSize(gridSize))
 {
+    m_Cells.reserve(gridSize * gridSize);
+
     if (gridSize < 4)
         throw std::runtime_error("Invalid Sudoku grid size '" + std::to_string(gridSize) + "', because: too small.");
 
@@ -68,71 +71,75 @@ Grid::Grid(int gridSize) :
     {
         for(auto col : boost::irange(0, m_GridSize))
         {
-            m_Cells[row][col] = std::make_shared<Cell>(Position{row, col}, gridSize);
+            m_Cells.emplace_back(Position{row, col}, gridSize);
         }
     }
 }
 
 Grid::Grid(Grid const& grid) :
-    m_Cells(boost::extents[grid.m_GridSize][grid.m_GridSize]),
-    m_GridSize(grid.m_GridSize),
-    m_BlockSize(grid.m_BlockSize)
+    m_GridSize(grid.GetGridSize()),
+    m_BlockSize(grid.GetBlockSize())
 {
-    for(auto row : boost::irange(0, grid.m_GridSize))
-    {
-        for(auto col : boost::irange(0, grid.m_GridSize))
-        {
-            m_Cells[row][col] = std::make_shared<Cell>(*grid.m_Cells[row][col]);
-        }
-    }
+    m_Cells.reserve(grid.GetGridSize() * grid.GetGridSize());
+
+    std::copy(grid.begin(), grid.end(), std::back_inserter(m_Cells));
 }
 
 Grid& Grid::operator=(Grid const& grid)
 {
-    for(auto row : boost::irange(0, grid.m_GridSize))
-    {
-        for(auto col : boost::irange(0, grid.m_GridSize))
-        {
-            *m_Cells[row][col] = *grid.m_Cells[row][col];
-        }
-    }
+    std::copy(grid.begin(), grid.end(), m_Cells.begin());
 
     return *this;
 }
 
-SharedCell Grid::GetCell(Position const& position)
+Cell& Grid::GetCell(Position const& position)
 {
-    return m_Cells[position.m_Row][position.m_Col];
+    return m_Cells.at(position.m_Row * m_GridSize + position.m_Col);
+}
+
+const Cell& Grid::GetCell(Position const& position) const
+{
+    return m_Cells.at(position.m_Row * m_GridSize + position.m_Col);
+}
+
+int Grid::GetGridSize() const
+{
+    return m_GridSize;
+}
+
+int Grid::GetBlockSize() const
+{
+    return m_BlockSize;
 }
 
 std::ostream& operator<<(std::ostream& os, Grid const& grid)
 {
-    for(auto row : boost::irange(0, grid.m_GridSize))
+    for(auto row : boost::irange(0, grid.GetGridSize()))
     {
-        if (row % grid.m_BlockSize == 0)
-            PrintHorizontalLine(os, grid.m_GridSize, grid.m_BlockSize);
+        if (row % grid.GetBlockSize() == 0)
+            PrintHorizontalLine(os, grid.GetGridSize(), grid.GetBlockSize());
 
-        for(auto col : boost::irange(0, grid.m_GridSize))
+        for(auto col : boost::irange(0, grid.GetGridSize()))
         {
-            if (col % grid.m_BlockSize == 0)
+            if (col % grid.GetBlockSize() == 0)
                 PrintVerticalSeparator(os);
 
-            PrintCell(os, *grid.m_Cells[row][col]);
+            PrintCell(os, grid.GetCell(Position{row, col}));
         }
 
         PrintVerticalSeparator(os);
         os << std::endl;
     }
 
-    PrintHorizontalLine(os, grid.m_GridSize, grid.m_BlockSize);
+    PrintHorizontalLine(os, grid.GetGridSize(), grid.GetBlockSize());
 
     return os;
 }
 
 bool operator==(const Grid& lhs, const Grid& rhs)
 {
-    return lhs.m_GridSize == rhs.m_GridSize
-            && std::equal(lhs.begin(), lhs.end(), rhs.begin(), [](auto const& lhs, auto const& rhs){ return *lhs == *rhs; });
+    return lhs.GetGridSize() == rhs.GetGridSize()
+            && std::equal(lhs.begin(), lhs.end(), rhs.begin());
 }
 
 } // namespace sudoku

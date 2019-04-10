@@ -6,7 +6,7 @@
 #include <boost/range/algorithm.hpp>
 
 #include "PossibilitiesRemover.hpp"
-#include "FoundCells.hpp"
+#include "FoundPositions.hpp"
 #include "Grid.hpp"
 
 using namespace sudoku;
@@ -20,7 +20,7 @@ ParallelPossibilitiesRemoverImpl::ParallelPossibilitiesRemoverImpl(
     m_PossibilitiesRemover(std::move(possibilitiesRemover))
 {}
 
-void ParallelPossibilitiesRemoverImpl::UpdateGrid(FoundCells& foundCells, Grid& grid)
+void ParallelPossibilitiesRemoverImpl::UpdateGrid(FoundPositions& foundPositions, Grid& grid)
 {
     int threadsWorkingCount = 0;
 
@@ -34,7 +34,7 @@ void ParallelPossibilitiesRemoverImpl::UpdateGrid(FoundCells& foundCells, Grid& 
     {
         auto threadWork = [&, threadId]
         {
-            RemoveQueuedUnvalidPossibilities(foundCells, grid, threadsWorkingCount, exceptionThrown);
+            RemoveQueuedUnvalidPossibilities(foundPositions, grid, threadsWorkingCount, exceptionThrown);
 
             std::unique_lock<std::mutex> lk(m);
             threadsFinished++;
@@ -52,19 +52,19 @@ void ParallelPossibilitiesRemoverImpl::UpdateGrid(FoundCells& foundCells, Grid& 
         throw std::runtime_error("UpdateGrid Exception");
 }
 
-void ParallelPossibilitiesRemoverImpl::RemoveQueuedUnvalidPossibilities(FoundCells& foundCells, Grid& grid, int& threadsWorkingCount, std::atomic<bool>& exception) const
+void ParallelPossibilitiesRemoverImpl::RemoveQueuedUnvalidPossibilities(FoundPositions& foundPositions, Grid& grid, int& threadsWorkingCount, std::atomic<bool>& exception) const
 {
     while (!exception)
     {
-        std::optional<SharedCell> newFoundCell;
+        std::optional<Position> newFoundPosition;
 
         {
-        std::lock_guard<std::mutex> l(foundCells.m_Mutex);
+        std::lock_guard<std::mutex> l(foundPositions.m_Mutex);
 
-        if (!foundCells.m_Queue.empty())
+        if (!foundPositions.m_Queue.empty())
         {
-            newFoundCell = foundCells.m_Queue.front();
-            foundCells.m_Queue.pop();
+            newFoundPosition = foundPositions.m_Queue.front();
+            foundPositions.m_Queue.pop();
             threadsWorkingCount++;
         }
         else if (threadsWorkingCount == 0)
@@ -73,11 +73,11 @@ void ParallelPossibilitiesRemoverImpl::RemoveQueuedUnvalidPossibilities(FoundCel
         }
         }
 
-        if (newFoundCell)
+        if (newFoundPosition)
         {
             try
             {
-                m_PossibilitiesRemover->UpdateGrid(**newFoundCell, grid, foundCells);
+                m_PossibilitiesRemover->UpdateGrid(*newFoundPosition, grid, foundPositions);
             }
             catch(std::exception const&)
             {
@@ -85,7 +85,7 @@ void ParallelPossibilitiesRemoverImpl::RemoveQueuedUnvalidPossibilities(FoundCel
             }
 
             {
-            std::lock_guard<std::mutex> l(foundCells.m_Mutex);
+            std::lock_guard<std::mutex> l(foundPositions.m_Mutex);
             threadsWorkingCount--;
             }
         }

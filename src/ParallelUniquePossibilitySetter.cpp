@@ -10,7 +10,7 @@
 #include <boost/range/algorithm.hpp>
 
 #include "Grid.hpp"
-#include "FoundCells.hpp"
+#include "FoundPositions.hpp"
 #include "UniquePossibilitySetter.hpp"
 
 using namespace sudoku;
@@ -68,7 +68,7 @@ ParallelUniquePossibilitySetterImpl::ParallelUniquePossibilitySetterImpl(
     m_UniquePossibilitySetter(std::move(uniquePossibilitySetter))
 {}
 
-void ParallelUniquePossibilitySetterImpl::SetCellsWithUniquePossibility(Grid& grid, FoundCells& foundCells)
+void ParallelUniquePossibilitySetterImpl::SetCellsWithUniquePossibility(Grid& grid, FoundPositions& foundPositions)
 {
     std::atomic<int> threadsFinished {0};
     std::atomic<bool> exceptionThrown {false};
@@ -76,7 +76,7 @@ void ParallelUniquePossibilitySetterImpl::SetCellsWithUniquePossibility(Grid& gr
     std::mutex m;
     auto cv = std::make_shared<std::condition_variable>();
 
-    PositionIter positionIter {grid.m_GridSize};
+    PositionIter positionIter {grid.GetGridSize()};
 
     for (int threadId : boost::irange(0, m_ParallelThreadsCount))
     {
@@ -88,7 +88,7 @@ void ParallelUniquePossibilitySetterImpl::SetCellsWithUniquePossibility(Grid& gr
             {
                 try
                 {
-                    m_UniquePossibilitySetter->SetIfUniquePossibility(*position, grid, foundCells);
+                    m_UniquePossibilitySetter->SetIfUniquePossibility(*position, grid, foundPositions);
                 }
                 catch (std::exception const&)
                 {

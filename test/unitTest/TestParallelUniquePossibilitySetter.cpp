@@ -8,7 +8,7 @@
 #include "mock/MockUniquePossibilitySetter.hpp"
 
 #include "Grid.hpp"
-#include "FoundCells.hpp"
+#include "FoundPositions.hpp"
 #include "ThreadPool.hpp"
 #include "utils/Utils.hpp"
 
@@ -47,22 +47,22 @@ TEST_F(TestParallelUniquePossibilitySetter, SetUniquePossibilitiesInParallel)
     const int gridSize = 4;
 
     Grid grid {gridSize};
-    FoundCells foundCells;
+    FoundPositions foundPositions;
 
     ParallelThreadsCounter parallelThreadsCounter;
 
-    auto GetThreadsWorkingInParallel = [&](Position const&, Grid&, FoundCells&) { parallelThreadsCounter.count(); };
+    auto GetThreadsWorkingInParallel = [&](Position const&, Grid&, FoundPositions&) { parallelThreadsCounter.count(); };
 
     for (auto row = 0; row < gridSize; row++)
     {
         for (auto col = 0; col < gridSize; col++)
         {
-            EXPECT_CALL(*m_UniquePossibilitySetter, SetIfUniquePossibility(Position {row, col}, Ref(grid), Ref(foundCells)))
+            EXPECT_CALL(*m_UniquePossibilitySetter, SetIfUniquePossibility(Position {row, col}, Ref(grid), Ref(foundPositions)))
                         .WillOnce(Invoke(GetThreadsWorkingInParallel));
         }
     }
 
-    MakeParallelUniquePossibilitySetter(parallelThreadsCount)->SetCellsWithUniquePossibility(grid, foundCells);
+    MakeParallelUniquePossibilitySetter(parallelThreadsCount)->SetCellsWithUniquePossibility(grid, foundPositions);
 
     EXPECT_THAT(parallelThreadsCounter.GetMaxThreadsWorkingInParallel(), Eq(parallelThreadsCount));
 }
@@ -73,10 +73,10 @@ TEST_F(TestParallelUniquePossibilitySetter, PropagateThreadExceptions)
     const int gridSize = 4;
 
     Grid grid {gridSize};
-    FoundCells foundCells;
+    FoundPositions foundPositions;
 
     ParallelThreadsCounter parallelThreadsCounter;
-    auto GetThreadsWorkingInParallel = [&](Position const&, Grid&, FoundCells&) { parallelThreadsCounter.count(); };
+    auto GetThreadsWorkingInParallel = [&](Position const&, Grid&, FoundPositions&) { parallelThreadsCounter.count(); };
 
     const int testExecutionCount = 20;
     for([[gnu::unused]] int i : boost::irange(0, testExecutionCount))
@@ -93,15 +93,15 @@ TEST_F(TestParallelUniquePossibilitySetter, PropagateThreadExceptions)
 
                 if (position == positionThrowing)
                 {
-                    EXPECT_CALL(*m_UniquePossibilitySetter, SetIfUniquePossibility(position, Ref(grid), Ref(foundCells)))
-                            .WillOnce(Invoke([&](Position const&, Grid&, FoundCells&)
+                    EXPECT_CALL(*m_UniquePossibilitySetter, SetIfUniquePossibility(position, Ref(grid), Ref(foundPositions)))
+                            .WillOnce(Invoke([&](Position const&, Grid&, FoundPositions&)
                                 {
                                     throw std::runtime_error("error");
                                 }));
                 }
                 else
                 {
-                    EXPECT_CALL(*m_UniquePossibilitySetter, SetIfUniquePossibility(position, Ref(grid), Ref(foundCells)))
+                    EXPECT_CALL(*m_UniquePossibilitySetter, SetIfUniquePossibility(position, Ref(grid), Ref(foundPositions)))
                                 .WillRepeatedly(Invoke(GetThreadsWorkingInParallel));
                 }
             }
@@ -109,7 +109,7 @@ TEST_F(TestParallelUniquePossibilitySetter, PropagateThreadExceptions)
 
         try
         {
-            MakeParallelUniquePossibilitySetter(parallelThreadsCount)->SetCellsWithUniquePossibility(grid, foundCells);
+            MakeParallelUniquePossibilitySetter(parallelThreadsCount)->SetCellsWithUniquePossibility(grid, foundPositions);
 
             FAIL() << "Error: did not propagate the exception";
         }

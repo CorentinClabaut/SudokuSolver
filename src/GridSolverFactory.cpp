@@ -4,7 +4,7 @@
 #include "ParallelPossibilitiesRemover.hpp"
 #include "ParallelUniquePossibilitySetter.hpp"
 #include "PossibilitiesRemover.hpp"
-#include "RelatedCellsGetter.hpp"
+#include "RelatedPositionsGetter.hpp"
 #include "UniquePossibilitySetter.hpp"
 #include "UniquePossibilityFinder.hpp"
 #include "ThreadPool.hpp"
@@ -22,7 +22,7 @@ std::unique_ptr<GridSolver> GridSolverFactory::Make(int parallelThreadsCount)
                         parallelThreadsCount,
                         threadPool,
                         std::make_unique<PossibilitiesRemoverImpl>(
-                            std::make_unique<RelatedCellsGetterImpl>()
+                            std::make_unique<RelatedPositionsGetterImpl>()
                         )
                     ),
                     std::make_unique<ParallelUniquePossibilitySetterImpl>(
@@ -30,7 +30,7 @@ std::unique_ptr<GridSolver> GridSolverFactory::Make(int parallelThreadsCount)
                         threadPool,
                         std::make_unique<UniquePossibilitySetterImpl>(
                             std::make_unique<UniquePossibilityFinderImpl>(
-                                std::make_unique<RelatedCellsGetterImpl>()
+                                std::make_unique<RelatedPositionsGetterImpl>()
                             )
                         )
                     )

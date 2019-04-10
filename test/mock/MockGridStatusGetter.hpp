@@ -11,7 +11,7 @@ namespace test
 class MockGridStatusGetter : public GridStatusGetter
 {
 public:
-    MOCK_CONST_METHOD1(GetStatus, GridStatus (Grid const& grid));
+    MOCK_CONST_METHOD1(GetStatus, GridStatus (Grid& grid));
 };
 
 } /* namespace test */

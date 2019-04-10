@@ -11,7 +11,7 @@ namespace test
 class MockPossibilitiesRemover : public PossibilitiesRemover
 {
 public:
-    MOCK_CONST_METHOD3(UpdateGrid, void(Cell const& newFoundCell, Grid& grid, FoundCells& foundCells));
+    MOCK_CONST_METHOD3(UpdateGrid, void(Position const& newFoundPosition, Grid& grid, FoundPositions& foundPositions));
 };
 
 } /* namespace test */

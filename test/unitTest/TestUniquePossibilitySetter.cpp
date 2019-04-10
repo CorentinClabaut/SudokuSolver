@@ -3,7 +3,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include "FoundCells.hpp"
+#include "FoundPositions.hpp"
 
 #include "mock/MockUniquePossibilityFinder.hpp"
 
@@ -21,39 +21,39 @@ namespace sudoku
 {
 namespace test
 {
-/*
+
 class TestUniquePossibilitySetter : public ::testing::Test
 {
 public:
     TestUniquePossibilitySetter()
     {}
 
-    void ExpectCellHasUniquePossibility(SharedCell cell, Grid const& grid, Value uniqueValue)
+    void ExpectCellHasUniquePossibility(Position const& position, Grid& grid, Value uniqueValue)
     {
-        EXPECT_CALL(*m_UniquePossibilityFinder, FindUniquePossibility(cell->GetPosition(), Ref(grid))).WillOnce(Return(uniqueValue));
+        EXPECT_CALL(*m_UniquePossibilityFinder, FindUniquePossibility(position, Ref(grid))).WillOnce(Return(uniqueValue));
     }
 
-    void ExpectCellHasNoUniquePossibility(SharedCell cell, Grid const& grid)
+    void ExpectCellHasNoUniquePossibility(Position const& position, Grid& grid)
     {
-        EXPECT_CALL(*m_UniquePossibilityFinder, FindUniquePossibility(cell->GetPosition(), Ref(grid))).WillOnce(Return(std::nullopt));
+        EXPECT_CALL(*m_UniquePossibilityFinder, FindUniquePossibility(position, Ref(grid))).WillOnce(Return(std::nullopt));
     }
 
-    void DontTryFindingUniquePossibility(SharedCell cell, Grid const& grid)
+    void DontTryFindingUniquePossibility(Position const& position, Grid& grid)
     {
-        EXPECT_CALL(*m_UniquePossibilityFinder, FindUniquePossibility(cell->GetPosition(), Ref(grid))).Times(0);
+        EXPECT_CALL(*m_UniquePossibilityFinder, FindUniquePossibility(position, Ref(grid))).Times(0);
     }
 
-    void ExpectCellSetTo(SharedCell cell, Value expectedValue)
+    void ExpectCellSetTo(Cell const& cell, Value expectedValue)
     {
-        auto cellValue = cell->GetValue();
+        auto cellValue = cell.GetValue();
 
         EXPECT_THAT(cellValue, Ne(std::nullopt));
         EXPECT_THAT(*cellValue, Eq(expectedValue));
     }
 
-    void ExpectCellNotSet(SharedCell cell)
+    void ExpectCellNotSet(Cell const& cell)
     {
-        auto cellValue = cell->GetValue();
+        auto cellValue = cell.GetValue();
 
         EXPECT_THAT(cellValue, Eq(std::nullopt));
     }
@@ -88,16 +88,16 @@ public:
 TEST_F(TestUniquePossibilitySetter, SkipCellAlreadySet)
 {
     Grid grid {m_GridSize};
-    FoundCells foundCells;
+    FoundPositions foundPositions;
 
-    std::vector<SharedCell> cells = {grid.m_Cells[0][1]};
-    grid.m_Cells[0][1]->SetValue(1);
+    Position position {0, 1};
+    grid.GetCell(position).SetValue(1);
 
-    DontTryFindingUniquePossibility(grid.m_Cells[0][1], grid);
+    DontTryFindingUniquePossibility(position, grid);
 
-    MakeUniquePossibilitySetter()->SetIfUniquePossibility(cells, grid, foundCells);
+    MakeUniquePossibilitySetter()->SetIfUniquePossibility(position, grid, foundPositions);
 
-    ExpectQueueEqual(foundCells.m_Queue, {});
+    ExpectQueueEqual(foundPositions.m_Queue, {});
 }
 
 TEST_F(TestUniquePossibilitySetter, SetOneCellWithUniquePossibility)
@@ -105,59 +105,34 @@ TEST_F(TestUniquePossibilitySetter, SetOneCellWithUniquePossibility)
     Value uniqueValue {4};
 
     Grid grid {m_GridSize};
-    FoundCells foundCells;
+    FoundPositions foundPositions;
 
-    std::vector<SharedCell> cells = {grid.m_Cells[0][1]};
+    Position position {0, 1};
 
-    ExpectCellHasUniquePossibility(grid.m_Cells[0][1], grid, uniqueValue);
+    ExpectCellHasUniquePossibility(position, grid, uniqueValue);
 
-    MakeUniquePossibilitySetter()->SetIfUniquePossibility(cells, grid, foundCells);
+    MakeUniquePossibilitySetter()->SetIfUniquePossibility(position, grid, foundPositions);
 
-    ExpectCellSetTo(grid.m_Cells[0][1], uniqueValue);
+    ExpectCellSetTo(grid.GetCell(position), uniqueValue);
 
-    ExpectQueueEqual(foundCells.m_Queue, {grid.m_Cells[0][1]});
+    ExpectQueueEqual(foundPositions.m_Queue, {position});
 }
 
 TEST_F(TestUniquePossibilitySetter, SetOneCellWithoutUniquePossibility)
 {
     Grid grid(m_GridSize);
-    FoundCells foundCells;
+    FoundPositions foundPositions;
 
-    std::vector<SharedCell> cells = {grid.m_Cells[0][1]};
+    Position position {0, 1};
 
-    ExpectCellHasNoUniquePossibility(grid.m_Cells[0][1], grid);
+    ExpectCellHasNoUniquePossibility(position, grid);
 
-    MakeUniquePossibilitySetter()->SetIfUniquePossibility(cells, grid, foundCells);
+    MakeUniquePossibilitySetter()->SetIfUniquePossibility(position, grid, foundPositions);
 
-    ExpectCellNotSet(grid.m_Cells[0][1]);
+    ExpectCellNotSet(grid.GetCell(position));
 
-    ExpectQueueEqual(foundCells.m_Queue, {});
+    ExpectQueueEqual(foundPositions.m_Queue, {});
 }
 
-TEST_F(TestUniquePossibilitySetter, SetSeveralCellsSetUniquePossibilities)
-{
-    Value uniqueValue1 {4};
-    Value uniqueValue2 {2};
-
-    Grid grid {m_GridSize};
-    FoundCells foundCells;
-
-    std::vector<SharedCell> cells = {grid.m_Cells[0][1], grid.m_Cells[0][2], grid.m_Cells[0][3], grid.m_Cells[1][1]};
-    grid.m_Cells[1][1]->SetValue(2);
-
-    ExpectCellHasUniquePossibility(grid.m_Cells[0][1], grid, uniqueValue1);
-    ExpectCellHasNoUniquePossibility(grid.m_Cells[0][2], grid);
-    ExpectCellHasUniquePossibility(grid.m_Cells[0][3], grid, uniqueValue2);
-    DontTryFindingUniquePossibility(grid.m_Cells[1][1], grid);
-
-    MakeUniquePossibilitySetter()->SetIfUniquePossibility(cells, grid, foundCells);
-
-    ExpectCellSetTo(grid.m_Cells[0][1], uniqueValue1);
-    ExpectCellNotSet(grid.m_Cells[0][2]);
-    ExpectCellSetTo(grid.m_Cells[0][3], uniqueValue2);
-
-    ExpectQueueEqual(foundCells.m_Queue, {grid.m_Cells[0][1], grid.m_Cells[0][3]});
-}
-*/
 } /* namespace test */
 } /* namespace sudoku */

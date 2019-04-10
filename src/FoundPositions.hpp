@@ -8,15 +8,15 @@
 namespace sudoku
 {
 
-struct FoundCells
+struct FoundPositions
 {
-    std::queue<SharedCell> m_Queue;
+    std::queue<Position> m_Queue;
     std::mutex m_Mutex;
 
-    void Enqueue(SharedCell cell)
+    void Enqueue(Position position)
     {
         std::lock_guard<std::mutex> l(m_Mutex);
-        m_Queue.push(cell);
+        m_Queue.push(std::move(position));
     }
 };
 

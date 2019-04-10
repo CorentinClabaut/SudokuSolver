@@ -11,7 +11,7 @@ namespace test
 class MockUniquePossibilityFinder : public UniquePossibilityFinder
 {
 public:
-    MOCK_CONST_METHOD2(FindUniquePossibility, std::optional<Value>(Position const& cellPosition, Grid const& grid));
+    MOCK_CONST_METHOD2(FindUniquePossibility, std::optional<Value>(Position const& cellPosition, Grid& grid));
 };
 
 } /* namespace test */

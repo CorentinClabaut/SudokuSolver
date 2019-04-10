@@ -6,7 +6,7 @@ namespace sudoku
 {
 
 class GridSolverWithoutHypothesis;
-struct FoundCells;
+struct FoundPositions;
 struct Grid;
 
 class GridSolver
@@ -26,7 +26,7 @@ public:
     bool Solve(Grid& grid) const override;
 
 private:
-    bool SolveWithtHypothesis(Grid& grid, FoundCells& foundCells) const;
+    bool SolveWithtHypothesis(Grid& grid, FoundPositions& foundPositions) const;
 
     std::unique_ptr<GridSolverWithoutHypothesis> m_GridSolverWithoutHypothesis;
 };

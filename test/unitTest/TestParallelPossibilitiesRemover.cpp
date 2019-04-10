@@ -9,7 +9,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include "FoundCells.hpp"
+#include "FoundPositions.hpp"
 #include "Grid.hpp"
 #include "utils/Utils.hpp"
 #include "ThreadPool.hpp"
@@ -44,7 +44,7 @@ public:
 
     const int m_GridSize {4};
 
-    std::shared_ptr<FoundCells> m_FoundCells = std::make_shared<FoundCells>();
+    std::shared_ptr<FoundPositions> m_FoundPositions = std::make_shared<FoundPositions>();
     Grid m_Grid {m_GridSize};
 
     ParallelThreadsCounter m_ParallelThreadsCounter;
@@ -54,43 +54,43 @@ public:
 
 TEST_F(TestParallelPossibilitiesRemover, RemoveFoundCellRelatedPossibilities)
 {
-    m_FoundCells->m_Queue.push(m_Grid.m_Cells[1][2]);
+    m_FoundPositions->m_Queue.push(Position {1, 2});
 
-    EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[1][2]), Ref(m_Grid), Ref(*m_FoundCells))).Times(1);
+    EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Position {1, 2}, Ref(m_Grid), Ref(*m_FoundPositions))).Times(1);
 
     const int parallelThreadsCount {4};
-    MakeParallelPossibilitiesRemover(parallelThreadsCount)->UpdateGrid(*m_FoundCells, m_Grid);
+    MakeParallelPossibilitiesRemover(parallelThreadsCount)->UpdateGrid(*m_FoundPositions, m_Grid);
 
-    EXPECT_TRUE(m_FoundCells->m_Queue.empty());
+    EXPECT_TRUE(m_FoundPositions->m_Queue.empty());
 }
 
-TEST_F(TestParallelPossibilitiesRemover, RemoveSeveralFoundCellsRelatedPossibilitiesInParallel)
+TEST_F(TestParallelPossibilitiesRemover, RemoveSeveralFoundPositionsRelatedPossibilitiesInParallel)
 {
     const int parallelThreadsCount {4};
 
-    m_FoundCells->m_Queue.push(m_Grid.m_Cells[0][0]);
-    m_FoundCells->m_Queue.push(m_Grid.m_Cells[0][1]);
-    m_FoundCells->m_Queue.push(m_Grid.m_Cells[0][2]);
-    m_FoundCells->m_Queue.push(m_Grid.m_Cells[0][3]);
+    m_FoundPositions->m_Queue.push(Position {0, 0});
+    m_FoundPositions->m_Queue.push(Position {0, 1});
+    m_FoundPositions->m_Queue.push(Position {0, 2});
+    m_FoundPositions->m_Queue.push(Position {0, 3});
 
-    auto GetThreadsWorkingInParallel = [&](Cell const&, Grid&, FoundCells&) { m_ParallelThreadsCounter.count(); };
+    auto GetThreadsWorkingInParallel = [&](Position const&, Grid&, FoundPositions&) { m_ParallelThreadsCounter.count(); };
 
-    EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[0][0]), Ref(m_Grid), Ref(*m_FoundCells)))
+    EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Position {0, 0}, Ref(m_Grid), Ref(*m_FoundPositions)))
             .WillOnce(Invoke(GetThreadsWorkingInParallel));
 
-    EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[0][1]), Ref(m_Grid), Ref(*m_FoundCells)))
+    EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Position {0, 1}, Ref(m_Grid), Ref(*m_FoundPositions)))
             .WillOnce(Invoke(GetThreadsWorkingInParallel));
 
-    EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[0][2]), Ref(m_Grid), Ref(*m_FoundCells)))
+    EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Position {0, 2}, Ref(m_Grid), Ref(*m_FoundPositions)))
             .WillOnce(Invoke(GetThreadsWorkingInParallel));
 
-    EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[0][3]), Ref(m_Grid), Ref(*m_FoundCells)))
+    EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Position {0, 3}, Ref(m_Grid), Ref(*m_FoundPositions)))
             .WillOnce(Invoke(GetThreadsWorkingInParallel));
 
-    MakeParallelPossibilitiesRemover(parallelThreadsCount)->UpdateGrid(*m_FoundCells, m_Grid);
+    MakeParallelPossibilitiesRemover(parallelThreadsCount)->UpdateGrid(*m_FoundPositions, m_Grid);
 
     EXPECT_THAT(m_ParallelThreadsCounter.GetMaxThreadsWorkingInParallel(), Eq(parallelThreadsCount));
-    EXPECT_TRUE(m_FoundCells->m_Queue.empty());
+    EXPECT_TRUE(m_FoundPositions->m_Queue.empty());
 }
 
 TEST_F(TestParallelPossibilitiesRemover, NewCellsFoundByThreadProcessedByOtherThreadsInParallel)
@@ -100,41 +100,41 @@ TEST_F(TestParallelPossibilitiesRemover, NewCellsFoundByThreadProcessedByOtherTh
     {
         const int parallelThreadsCount {4};
 
-        m_FoundCells->m_Queue.push(m_Grid.m_Cells[1][1]);
+        m_FoundPositions->m_Queue.push(Position {1, 1});
 
-        auto FindNewCells = [&](Cell const&, Grid& grid, FoundCells& foundCells)
+        auto FindNewCells = [&](Position const&, Grid& grid, FoundPositions& foundPositions)
         {
             std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
-            foundCells.Enqueue(grid.m_Cells[0][0]);
-            foundCells.Enqueue(grid.m_Cells[0][1]);
-            foundCells.Enqueue(grid.m_Cells[0][2]);
-            foundCells.Enqueue(grid.m_Cells[0][3]);
+            foundPositions.Enqueue(grid.GetCell(Position{0, 0}).GetPosition());
+            foundPositions.Enqueue(grid.GetCell(Position{0, 1}).GetPosition());
+            foundPositions.Enqueue(grid.GetCell(Position{0, 2}).GetPosition());
+            foundPositions.Enqueue(grid.GetCell(Position{0, 3}).GetPosition());
         };
 
-        auto GetThreadsWorkingInParallel = [&](Cell const&, Grid&, FoundCells&) { m_ParallelThreadsCounter.count(); };
+        auto GetThreadsWorkingInParallel = [&](Position const&, Grid&, FoundPositions&) { m_ParallelThreadsCounter.count(); };
 
         m_PossibilitiesRemover = std::make_unique<StrictMock<MockPossibilitiesRemover>>();
 
-        EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[1][1]), Ref(m_Grid), Ref(*m_FoundCells)))
+        EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Position {1, 1}, Ref(m_Grid), Ref(*m_FoundPositions)))
                 .WillOnce(Invoke(FindNewCells));
 
-        EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[0][0]), Ref(m_Grid), Ref(*m_FoundCells)))
+        EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Position {0, 0}, Ref(m_Grid), Ref(*m_FoundPositions)))
                 .WillOnce(Invoke(GetThreadsWorkingInParallel));
 
-        EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[0][1]), Ref(m_Grid), Ref(*m_FoundCells)))
+        EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Position {0, 1}, Ref(m_Grid), Ref(*m_FoundPositions)))
                 .WillOnce(Invoke(GetThreadsWorkingInParallel));
 
-        EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[0][2]), Ref(m_Grid), Ref(*m_FoundCells)))
+        EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Position {0, 2}, Ref(m_Grid), Ref(*m_FoundPositions)))
                 .WillOnce(Invoke(GetThreadsWorkingInParallel));
 
-        EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[0][3]), Ref(m_Grid), Ref(*m_FoundCells)))
+        EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Position {0, 3}, Ref(m_Grid), Ref(*m_FoundPositions)))
                 .WillOnce(Invoke(GetThreadsWorkingInParallel));
 
-        MakeParallelPossibilitiesRemover(parallelThreadsCount)->UpdateGrid(*m_FoundCells, m_Grid);
+        MakeParallelPossibilitiesRemover(parallelThreadsCount)->UpdateGrid(*m_FoundPositions, m_Grid);
 
         EXPECT_THAT(m_ParallelThreadsCounter.GetMaxThreadsWorkingInParallel(), Eq(parallelThreadsCount));
-        EXPECT_TRUE(m_FoundCells->m_Queue.empty());
+        EXPECT_TRUE(m_FoundPositions->m_Queue.empty());
     }
 }
 
@@ -147,37 +147,37 @@ TEST_F(TestParallelPossibilitiesRemover, AllThreadsStopCorrectlyIfOneThreadStopA
 
         const int parallelThreadsCount {4};
 
-        m_FoundCells->m_Queue.push(m_Grid.m_Cells[0][0]);
-        m_FoundCells->m_Queue.push(m_Grid.m_Cells[0][1]);
-        m_FoundCells->m_Queue.push(m_Grid.m_Cells[0][2]);
-        m_FoundCells->m_Queue.push(m_Grid.m_Cells[0][3]);
+        m_FoundPositions->m_Queue.push(Position {0, 0});
+        m_FoundPositions->m_Queue.push(Position {0, 1});
+        m_FoundPositions->m_Queue.push(Position {0, 2});
+        m_FoundPositions->m_Queue.push(Position {0, 3});
 
-        EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[0][0]), Ref(m_Grid), Ref(*m_FoundCells)))
-                .WillRepeatedly(Invoke([this](Cell const&, Grid&, FoundCells&)
+        EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Position {0, 0}, Ref(m_Grid), Ref(*m_FoundPositions)))
+                .WillRepeatedly(Invoke([this](Position const&, Grid&, FoundPositions&)
                     {
                         std::this_thread::sleep_for(std::chrono::milliseconds((rand() % 5) + 1));
                     }));
 
-        EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[0][1]), Ref(m_Grid), Ref(*m_FoundCells)))
-                .WillOnce(Invoke([](Cell const&, Grid&, FoundCells&)
+        EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Position {0, 1}, Ref(m_Grid), Ref(*m_FoundPositions)))
+                .WillOnce(Invoke([](Position const&, Grid&, FoundPositions&)
                     {
                         std::this_thread::sleep_for(std::chrono::milliseconds((rand() % 5) + 1));
                         throw std::runtime_error("error");
                     }));
 
-        EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[0][2]), Ref(m_Grid), Ref(*m_FoundCells)))
-                .WillRepeatedly(Invoke([this](Cell const&, Grid&, FoundCells&)
+        EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Position {0, 2}, Ref(m_Grid), Ref(*m_FoundPositions)))
+                .WillRepeatedly(Invoke([this](Position const&, Grid&, FoundPositions&)
                     {
                         std::this_thread::sleep_for(std::chrono::milliseconds((rand() % 5) + 1));
                     }));
 
-        EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Ref(*m_Grid.m_Cells[0][3]), Ref(m_Grid), Ref(*m_FoundCells)))
-                .WillRepeatedly(Invoke([this](Cell const&, Grid&, FoundCells&)
+        EXPECT_CALL(*m_PossibilitiesRemover, UpdateGrid(Position {0, 3}, Ref(m_Grid), Ref(*m_FoundPositions)))
+                .WillRepeatedly(Invoke([this](Position const&, Grid&, FoundPositions&)
                     {
                         std::this_thread::sleep_for(std::chrono::milliseconds((rand() % 5) + 1));
                     }));
 
-        EXPECT_THROW(MakeParallelPossibilitiesRemover(parallelThreadsCount)->UpdateGrid(*m_FoundCells, m_Grid), std::exception);
+        EXPECT_THROW(MakeParallelPossibilitiesRemover(parallelThreadsCount)->UpdateGrid(*m_FoundPositions, m_Grid), std::exception);
     }
 }
 

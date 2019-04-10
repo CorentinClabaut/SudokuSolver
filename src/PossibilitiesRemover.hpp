@@ -6,27 +6,27 @@ namespace sudoku
 {
 
 class Grid;
-class Cell;
-class RelatedCellsGetter;
-struct FoundCells;
+class Position;
+class RelatedPositionsGetter;
+struct FoundPositions;
 
 class PossibilitiesRemover
 {
 public:
     virtual ~PossibilitiesRemover() = default;
 
-    virtual void UpdateGrid(Cell const& newFoundCell, Grid& grid, FoundCells& foundCells) const = 0;
+    virtual void UpdateGrid(Position const& newFoundPosition, Grid& grid, FoundPositions& foundPositions) const = 0;
 };
 
 class PossibilitiesRemoverImpl : public PossibilitiesRemover
 {
 public:
-    PossibilitiesRemoverImpl(std::unique_ptr<RelatedCellsGetter> relatedCellsGetter);
+    PossibilitiesRemoverImpl(std::unique_ptr<RelatedPositionsGetter> relatedPositionsGetter);
 
-    void UpdateGrid(Cell const& newFoundCell, Grid& grid, FoundCells& foundCells) const override;
+    void UpdateGrid(Position const& newFoundPosition, Grid& grid, FoundPositions& foundPositions) const override;
 
 private:
-    std::unique_ptr<RelatedCellsGetter> m_RelatedCellsGetter;
+    std::unique_ptr<RelatedPositionsGetter> m_RelatedPositionsGetter;
 };
 
 } /* namespace sudoku */

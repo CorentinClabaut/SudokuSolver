@@ -3,7 +3,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include "FoundCells.hpp"
+#include "FoundPositions.hpp"
 #include "GridStatus.hpp"
 #include "Grid.hpp"
 
@@ -68,14 +68,14 @@ TEST_F(TestGridSolverWithHypothesis, GridSolvedAfterOneHypthesisOnCell)
 
     Position hypothesisCellPosition {1, 2};
 
-    grid.GetCell(Position {0, 1})->SetValue(4);
-    grid.GetCell(Position {3, 2})->SetValue(2);
-    grid.GetCell(Position {1, 0})->RemovePossibility(3);
-    grid.GetCell(hypothesisCellPosition)->RemovePossibility(4);
-    grid.GetCell(hypothesisCellPosition)->RemovePossibility(3);
+    grid.GetCell(Position {0, 1}).SetValue(4);
+    grid.GetCell(Position {3, 2}).SetValue(2);
+    grid.GetCell(Position {1, 0}).RemovePossibility(3);
+    grid.GetCell(hypothesisCellPosition).RemovePossibility(4);
+    grid.GetCell(hypothesisCellPosition).RemovePossibility(3);
 
     Grid hypothesisGrid {grid};
-    hypothesisGrid.GetCell(hypothesisCellPosition)->SetValue(2);
+    hypothesisGrid.GetCell(hypothesisCellPosition).SetValue(2);
 
     {
     InSequence s;
@@ -96,17 +96,17 @@ TEST_F(TestGridSolverWithHypothesis, GridSolvedAfterSeveralHypthesisOnCell)
 
     Position hypothesisCellPosition {1, 2};
 
-    grid.GetCell(Position {0, 1})->SetValue(4);
-    grid.GetCell(Position {3, 2})->SetValue(2);
-    grid.GetCell(Position {1, 0})->RemovePossibility(3);
-    grid.GetCell(hypothesisCellPosition)->RemovePossibility(4);
-    grid.GetCell(hypothesisCellPosition)->RemovePossibility(3);
+    grid.GetCell(Position {0, 1}).SetValue(4);
+    grid.GetCell(Position {3, 2}).SetValue(2);
+    grid.GetCell(Position {1, 0}).RemovePossibility(3);
+    grid.GetCell(hypothesisCellPosition).RemovePossibility(4);
+    grid.GetCell(hypothesisCellPosition).RemovePossibility(3);
 
     Grid hypothesisGrid1 {grid};
-    hypothesisGrid1.GetCell(hypothesisCellPosition)->SetValue(2);
+    hypothesisGrid1.GetCell(hypothesisCellPosition).SetValue(2);
 
     Grid hypothesisGrid2 {grid};
-    hypothesisGrid2.GetCell(hypothesisCellPosition)->SetValue(1);
+    hypothesisGrid2.GetCell(hypothesisCellPosition).SetValue(1);
 
     {
     InSequence s;
@@ -128,17 +128,17 @@ TEST_F(TestGridSolverWithHypothesis, GridSolvedWrongAfterSeveralHypthesisOnCell)
 
     Position hypothesisCellPosition {1, 2};
 
-    grid.GetCell(Position {0, 1})->SetValue(4);
-    grid.GetCell(Position {3, 2})->SetValue(2);
-    grid.GetCell(Position {1, 0})->RemovePossibility(3);
-    grid.GetCell(hypothesisCellPosition)->RemovePossibility(4);
-    grid.GetCell(hypothesisCellPosition)->RemovePossibility(3);
+    grid.GetCell(Position {0, 1}).SetValue(4);
+    grid.GetCell(Position {3, 2}).SetValue(2);
+    grid.GetCell(Position {1, 0}).RemovePossibility(3);
+    grid.GetCell(hypothesisCellPosition).RemovePossibility(4);
+    grid.GetCell(hypothesisCellPosition).RemovePossibility(3);
 
     Grid hypothesisGrid1 {grid};
-    hypothesisGrid1.GetCell(hypothesisCellPosition)->SetValue(2);
+    hypothesisGrid1.GetCell(hypothesisCellPosition).SetValue(2);
 
     Grid hypothesisGrid2 {grid};
-    hypothesisGrid2.GetCell(hypothesisCellPosition)->SetValue(1);
+    hypothesisGrid2.GetCell(hypothesisCellPosition).SetValue(1);
 
     {
     InSequence s;
@@ -160,17 +160,17 @@ TEST_F(TestGridSolverWithHypothesis, GridSolvedAfterSeveralHypthesisOnDifferentC
     Position hypothesis1CellPosition {1, 2};
     Position hypothesis2CellPosition {1, 0};
 
-    grid.GetCell(Position {0, 1})->SetValue(4);
-    grid.GetCell(Position {3, 2})->SetValue(2);
-    grid.GetCell(hypothesis2CellPosition)->RemovePossibility(4);
-    grid.GetCell(hypothesis1CellPosition)->RemovePossibility(4);
-    grid.GetCell(hypothesis1CellPosition)->RemovePossibility(3);
+    grid.GetCell(Position {0, 1}).SetValue(4);
+    grid.GetCell(Position {3, 2}).SetValue(2);
+    grid.GetCell(hypothesis2CellPosition).RemovePossibility(4);
+    grid.GetCell(hypothesis1CellPosition).RemovePossibility(4);
+    grid.GetCell(hypothesis1CellPosition).RemovePossibility(3);
 
     Grid hypothesisGrid1 {grid};
-    hypothesisGrid1.GetCell(hypothesis1CellPosition)->SetValue(2);
+    hypothesisGrid1.GetCell(hypothesis1CellPosition).SetValue(2);
 
     Grid hypothesisGrid2 {hypothesisGrid1};
-    hypothesisGrid2.GetCell(hypothesis2CellPosition)->SetValue(3);
+    hypothesisGrid2.GetCell(hypothesis2CellPosition).SetValue(3);
 
     {
     InSequence s;

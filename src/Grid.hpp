@@ -1,30 +1,35 @@
 #pragma once
 
 #include <ostream>
-
-#include <boost/multi_array.hpp>
+#include <vector>
 
 #include "Cell.hpp"
 
 namespace sudoku
 {
 
-struct Grid
+class Grid
 {
+public:
     Grid(int gridSize);
     Grid(Grid const& grid);
 
     Grid& operator=(Grid const& grid);
 
-    auto begin() const { return m_Cells.origin(); }
-    auto end() const { return m_Cells.origin() + m_Cells.num_elements(); }
+    auto begin() const { return m_Cells.begin(); }
+    auto end() const { return m_Cells.end(); }
 
-    auto begin() { return m_Cells.origin(); }
-    auto end() { return m_Cells.origin() + m_Cells.num_elements(); }
+    auto begin() { return m_Cells.begin(); }
+    auto end() { return m_Cells.end(); }
 
-    SharedCell GetCell(Position const& position);
+    Cell& GetCell(Position const& position);
+    const Cell& GetCell(Position const& position) const;
 
-    boost::multi_array<SharedCell, 2> m_Cells;
+    int GetGridSize() const;
+    int GetBlockSize() const;
+
+private:
+    std::vector<Cell> m_Cells;
 
     const int m_GridSize;
     const int m_BlockSize;

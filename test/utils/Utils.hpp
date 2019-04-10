@@ -58,22 +58,22 @@ inline Grid Create4x4IncorrectlySolvedGrid()
 {
     Grid grid(4);
 
-    grid.m_Cells[0][0]->SetValue(1);
-    grid.m_Cells[0][1]->SetValue(2);
-    grid.m_Cells[0][2]->SetValue(3);
-    grid.m_Cells[0][3]->SetValue(4);
-    grid.m_Cells[1][0]->SetValue(3);
-    grid.m_Cells[1][1]->SetValue(4);
-    grid.m_Cells[1][2]->SetValue(1);
-    grid.m_Cells[1][3]->SetValue(4); // wrong value, should be 2
-    grid.m_Cells[2][0]->SetValue(2);
-    grid.m_Cells[2][1]->SetValue(3);
-    grid.m_Cells[2][2]->SetValue(4);
-    grid.m_Cells[2][3]->SetValue(1);
-    grid.m_Cells[3][0]->SetValue(4);
-    grid.m_Cells[3][1]->SetValue(1);
-    grid.m_Cells[3][2]->SetValue(2);
-    grid.m_Cells[3][3]->SetValue(3);
+    grid.GetCell(Position{0, 0}).SetValue(1);
+    grid.GetCell(Position{0, 1}).SetValue(2);
+    grid.GetCell(Position{0, 2}).SetValue(3);
+    grid.GetCell(Position{0, 3}).SetValue(4);
+    grid.GetCell(Position{1, 0}).SetValue(3);
+    grid.GetCell(Position{1, 1}).SetValue(4);
+    grid.GetCell(Position{1, 2}).SetValue(1);
+    grid.GetCell(Position{1, 3}).SetValue(4); // wrong value, should be 2
+    grid.GetCell(Position{2, 0}).SetValue(2);
+    grid.GetCell(Position{2, 1}).SetValue(3);
+    grid.GetCell(Position{2, 2}).SetValue(4);
+    grid.GetCell(Position{2, 3}).SetValue(1);
+    grid.GetCell(Position{3, 0}).SetValue(4);
+    grid.GetCell(Position{3, 1}).SetValue(1);
+    grid.GetCell(Position{3, 2}).SetValue(2);
+    grid.GetCell(Position{3, 3}).SetValue(3);
 
     return grid;
 }
@@ -209,7 +209,7 @@ inline Grid CreateGrid(int gridSize, PositionsValues const& positionsValues)
 
     for (auto & [position, value] : positionsValues)
     {
-        grid.m_Cells[position.m_Row][position.m_Col]->SetValue(value);
+        grid.GetCell(position).SetValue(value);
     }
 
     return grid;
