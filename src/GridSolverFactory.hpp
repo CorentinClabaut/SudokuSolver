@@ -8,7 +8,7 @@ namespace sudoku
 class GridSolverFactory
 {
 public:
-    static std::unique_ptr<GridSolver> Make(int parallelThreadsCount);
+    static std::unique_ptr<GridSolver> Make();
 };
 
 } /* namespace sudoku */

@@ -1,8 +1,7 @@
 #include <unordered_map>
 #include <vector>
 #include <numeric>
-#include <atomic>
-#include <thread>
+#include <queue>
 
 #include <boost/range/algorithm_ext.hpp>
 
@@ -28,31 +27,6 @@ inline void RemoveAllCellPossibilitiesBut(Cell& cell, std::unordered_set<Value> 
     for (auto possibility : possibilitiesToRemove)
         cell.RemovePossibility(possibility);
 }
-
-class ParallelThreadsCounter
-{
-public:
-    void count()
-    {
-        threadsWorking++;
-
-        int max = std::max(threadsWorking, maxThreadsWorkingInParallel);
-        maxThreadsWorkingInParallel = max;
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
-        threadsWorking--;
-    }
-
-    int GetMaxThreadsWorkingInParallel()
-    {
-        return maxThreadsWorkingInParallel;
-    }
-
-private:
-    std::atomic<int> threadsWorking {0};
-    std::atomic<int> maxThreadsWorkingInParallel {0};
-};
 
 inline Grid Create4x4IncorrectlySolvedGrid()
 {
@@ -226,6 +200,20 @@ inline Grid Create4x4CorrectlyPartiallyFilledGrid()
     auto positionsValues = CreatePositionsValues4x4();
     positionsValues = KeepRandomCells(positionsValues, 6);
     return CreateGrid(4, positionsValues);
+}
+
+template<typename T>
+inline std::vector<T> QueueToVector(std::queue<T>& queue)
+{
+    std::vector<T> pushedData;
+
+    while (!queue.empty())
+    {
+        pushedData.push_back(queue.front());
+        queue.pop();
+    }
+
+    return pushedData;
 }
 
 } /* namespace test */

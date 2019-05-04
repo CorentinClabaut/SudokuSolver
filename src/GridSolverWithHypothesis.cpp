@@ -1,7 +1,6 @@
 #include "GridSolverWithHypothesis.hpp"
 
 #include "GridSolverWithoutHypothesis.hpp"
-#include "FoundPositions.hpp"
 #include "GridStatus.hpp"
 #include "Grid.hpp"
 
@@ -17,7 +16,7 @@ void GetFoundPositions(Grid const& grid, FoundPositions& foundPositions)
     for (auto cell : grid)
     {
         if (cell.IsSet())
-            foundPositions.m_Queue.push(cell.GetPosition());
+            foundPositions.push(cell.GetPosition());
     }
 }
 
@@ -58,7 +57,7 @@ void SetHypotheticCellValue(Grid& grid, FoundPositions& foundPositions, Position
     auto& hypothesisCell = grid.GetCell(hypothesisCellPosition);
 
     hypothesisCell.SetValue(valueToTry);
-    foundPositions.Enqueue(hypothesisCell.GetPosition());
+    foundPositions.push(hypothesisCell.GetPosition());
 }
 
 bool CellHasOnlyOnePossibilityLeft(Grid& grid, Position const& position)

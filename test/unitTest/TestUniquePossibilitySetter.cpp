@@ -3,18 +3,21 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include "FoundPositions.hpp"
+#include <boost/range/irange.hpp>
+#include <boost/range/adaptors.hpp>
+#include <boost/algorithm/cxx11/is_permutation.hpp>
 
 #include "mock/MockUniquePossibilityFinder.hpp"
 
 #include "Grid.hpp"
+#include "FoundPositions.hpp"
+#include "utils/Utils.hpp"
 
 using testing::_;
-using testing::Ne;
 using testing::Eq;
 using testing::Ref;
 using testing::Return;
-using testing::ReturnRef;
+using testing::Invoke;
 using testing::StrictMock;
 
 namespace sudoku
@@ -28,110 +31,74 @@ public:
     TestUniquePossibilitySetter()
     {}
 
-    void ExpectCellHasUniquePossibility(Position const& position, Grid& grid, Value uniqueValue)
-    {
-        EXPECT_CALL(*m_UniquePossibilityFinder, FindUniquePossibility(position, Ref(grid))).WillOnce(Return(uniqueValue));
-    }
-
-    void ExpectCellHasNoUniquePossibility(Position const& position, Grid& grid)
-    {
-        EXPECT_CALL(*m_UniquePossibilityFinder, FindUniquePossibility(position, Ref(grid))).WillOnce(Return(std::nullopt));
-    }
-
-    void DontTryFindingUniquePossibility(Position const& position, Grid& grid)
-    {
-        EXPECT_CALL(*m_UniquePossibilityFinder, FindUniquePossibility(position, Ref(grid))).Times(0);
-    }
-
-    void ExpectCellSetTo(Cell const& cell, Value expectedValue)
-    {
-        auto cellValue = cell.GetValue();
-
-        EXPECT_THAT(cellValue, Ne(std::nullopt));
-        EXPECT_THAT(*cellValue, Eq(expectedValue));
-    }
-
-    void ExpectCellNotSet(Cell const& cell)
-    {
-        auto cellValue = cell.GetValue();
-
-        EXPECT_THAT(cellValue, Eq(std::nullopt));
-    }
-
-    template<typename T>
-    void ExpectQueueEqual(std::queue<T>& queue, std::vector<T> const& vector)
-    {
-        EXPECT_THAT(queue.size(), Eq(vector.size()));
-
-        auto vectorIter = vector.begin();
-        while (!queue.empty())
-        {
-            auto val = queue.front();
-            EXPECT_THAT(val, Eq(*vectorIter));
-            queue.pop();
-
-            vectorIter++;
-        }
-    }
-
     std::unique_ptr<UniquePossibilitySetter> MakeUniquePossibilitySetter()
     {
         return std::make_unique<UniquePossibilitySetterImpl>(
                     std::move(m_UniquePossibilityFinder));
     }
 
-    int m_GridSize = 4;
+    Grid CreateGridWithOneCellNotSet(Position const& cellNotSetPosition)
+    {
+        const int gridSize {4};
+        Grid grid {gridSize};
+
+        for (auto& cell : grid)
+        {
+            if (cell.GetPosition() == cellNotSetPosition)
+                continue;
+
+            cell.SetValue(3);
+        }
+
+        return grid;
+    }
 
     std::unique_ptr<MockUniquePossibilityFinder> m_UniquePossibilityFinder = std::make_unique<StrictMock<MockUniquePossibilityFinder>>();
 };
 
-TEST_F(TestUniquePossibilitySetter, SkipCellAlreadySet)
+TEST_F(TestUniquePossibilitySetter, SetCellsWithUniquePossibility_AllCellsAlreadySet)
 {
-    Grid grid {m_GridSize};
     FoundPositions foundPositions;
 
-    Position position {0, 1};
-    grid.GetCell(position).SetValue(1);
+    auto grid = Create4x4CorrectlySolvedGrid();
 
-    DontTryFindingUniquePossibility(position, grid);
+    MakeUniquePossibilitySetter()->SetCellsWithUniquePossibility(grid, foundPositions);
 
-    MakeUniquePossibilitySetter()->SetIfUniquePossibility(position, grid, foundPositions);
-
-    ExpectQueueEqual(foundPositions.m_Queue, {});
+    EXPECT_TRUE(QueueToVector(foundPositions).empty());
 }
 
-TEST_F(TestUniquePossibilitySetter, SetOneCellWithUniquePossibility)
+TEST_F(TestUniquePossibilitySetter, SetCellsWithUniquePossibility_OneCellNotSetFoundValue)
 {
-    Value uniqueValue {4};
-
-    Grid grid {m_GridSize};
     FoundPositions foundPositions;
 
-    Position position {0, 1};
+    const Position cellNotSetPosition {1, 2};
+    auto grid = CreateGridWithOneCellNotSet(cellNotSetPosition);
 
-    ExpectCellHasUniquePossibility(position, grid, uniqueValue);
+    const Value foundValue {2};
 
-    MakeUniquePossibilitySetter()->SetIfUniquePossibility(position, grid, foundPositions);
+    EXPECT_CALL(*m_UniquePossibilityFinder, FindUniquePossibility(Ref(grid.GetCell(cellNotSetPosition)), Ref(grid)))
+            .WillOnce(Return(foundValue));
 
-    ExpectCellSetTo(grid.GetCell(position), uniqueValue);
+    MakeUniquePossibilitySetter()->SetCellsWithUniquePossibility(grid, foundPositions);
 
-    ExpectQueueEqual(foundPositions.m_Queue, {position});
+    EXPECT_THAT(QueueToVector(foundPositions), Eq(std::vector<Position>{cellNotSetPosition}));
+    EXPECT_THAT(grid.GetCell(cellNotSetPosition).GetValue(), Eq(foundValue));
 }
 
-TEST_F(TestUniquePossibilitySetter, SetOneCellWithoutUniquePossibility)
+TEST_F(TestUniquePossibilitySetter, SetCellsWithUniquePossibility_OneCellNotSetDidNotFoundValue)
 {
-    Grid grid(m_GridSize);
     FoundPositions foundPositions;
 
-    Position position {0, 1};
+    const Position cellNotSetPosition {1, 2};
+    auto grid = CreateGridWithOneCellNotSet(cellNotSetPosition);
 
-    ExpectCellHasNoUniquePossibility(position, grid);
+    EXPECT_CALL(*m_UniquePossibilityFinder, FindUniquePossibility(Ref(grid.GetCell(cellNotSetPosition)), Ref(grid)))
+            .WillOnce(Return(std::optional<Value>{}));
 
-    MakeUniquePossibilitySetter()->SetIfUniquePossibility(position, grid, foundPositions);
+    MakeUniquePossibilitySetter()->SetCellsWithUniquePossibility(grid, foundPositions);
 
-    ExpectCellNotSet(grid.GetCell(position));
-
-    ExpectQueueEqual(foundPositions.m_Queue, {});
+    EXPECT_TRUE(QueueToVector(foundPositions).empty());
+    EXPECT_THAT(grid.GetCell(cellNotSetPosition).GetValue(), Eq(std::optional<Value>{}));
 }
 
 } /* namespace test */

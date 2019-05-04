@@ -26,13 +26,11 @@ public:
     const Cell& GetCell(Position const& position) const;
 
     int GetGridSize() const;
-    int GetBlockSize() const;
 
 private:
     std::vector<Cell> m_Cells;
 
     const int m_GridSize;
-    const int m_BlockSize;
 };
 
 std::ostream& operator<<(std::ostream& os, Grid const& grid);

@@ -1,8 +1,7 @@
 #include "UniquePossibilitySetter.hpp"
 
-#include "UniquePossibilityFinder.hpp"
-#include "FoundPositions.hpp"
 #include "Grid.hpp"
+#include "UniquePossibilityFinder.hpp"
 
 using namespace sudoku;
 
@@ -11,19 +10,19 @@ UniquePossibilitySetterImpl::UniquePossibilitySetterImpl(
     m_UniquePossibilityFinder(std::move(uniquePossibilityFinder))
 {}
 
-void UniquePossibilitySetterImpl::SetIfUniquePossibility(Position const& position, Grid& grid, FoundPositions& foundPositions) const
+void UniquePossibilitySetterImpl::SetCellsWithUniquePossibility(Grid& grid, FoundPositions& foundPositions)
 {
-    auto& cell = grid.GetCell(position);
+    for (auto& cell : grid)
+    {
+        if (cell.IsSet())
+            continue;
 
-    if (cell.IsSet())
-        return;
+        auto uniquePossibility = m_UniquePossibilityFinder->FindUniquePossibility(cell, grid);
 
-    auto uniquePossibility = m_UniquePossibilityFinder->FindUniquePossibility(position, grid);
+        if (!uniquePossibility)
+            continue;
 
-    if (!uniquePossibility)
-        return;
-
-    cell.SetValue(*uniquePossibility);
-
-    foundPositions.Enqueue(cell.GetPosition());
+        cell.SetValue(*uniquePossibility);
+        foundPositions.push(cell.GetPosition());
+    }
 }

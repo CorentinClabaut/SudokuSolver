@@ -35,12 +35,11 @@ void Possibilities::RemovePossibility(Value const& value)
 
 void Possibilities::SetValue(Value const& value)
 {
-    PossibilitiesBitSet valueBit = 1 << (value - 1);
-
-    if ((m_Possibilities & valueBit) == 0)
+    if (!Contains(value))
         throw std::runtime_error("Try to set cell with impossible value");
 
-    m_Possibilities = valueBit;
+    m_Possibilities.reset();
+    m_Possibilities.set(value -1);
 }
 
 std::optional<Value> Possibilities::GetValue() const
@@ -62,6 +61,11 @@ Value Possibilities::GetPossibilityLeft() const
     }
 
     return val;
+}
+
+bool Possibilities::Contains(Value value) const
+{
+    return m_Possibilities.test(value - 1);
 }
 
 int Possibilities::GetNumberPossibilitiesLeft() const

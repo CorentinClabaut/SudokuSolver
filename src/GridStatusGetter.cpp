@@ -24,7 +24,7 @@ std::vector<std::reference_wrapper<Cell>> GetCellsSet(Grid& grid)
     return cellsSet;
 }
 
-std::vector<Value> GetSetCellValues(std::vector<Position> const& relatedPositions, Grid const& grid)
+std::vector<Value> GetSetCellValues(Range<Position> const& relatedPositions, Grid const& grid)
 {
     std::vector<Value> setCells;
 
@@ -66,7 +66,7 @@ bool GridStatusGetterImpl::AreSetCellsValid(Grid& grid) const
 
 std::vector<Value> GridStatusGetterImpl::GetRelatedCellsSetValue(Position const& selectedPosition, Grid& grid) const
 {
-    auto relatedPositions = m_RelatedPositionsGetter->GetAllRelatedPositions(selectedPosition, grid.GetGridSize(), grid.GetBlockSize());
+    auto relatedPositions = m_RelatedPositionsGetter->GetAllRelatedPositions(selectedPosition, grid.GetGridSize());
 
     return GetSetCellValues(relatedPositions, grid);
 }

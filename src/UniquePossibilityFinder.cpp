@@ -1,10 +1,5 @@
 #include "UniquePossibilityFinder.hpp"
 
-#include <boost/range/adaptors.hpp>
-#include <boost/range/algorithm.hpp>
-#include <boost/range/algorithm_ext.hpp>
-#include <boost/algorithm/string/join.hpp>
-
 #include "RelatedPositionsGetter.hpp"
 #include "Position.hpp"
 #include "Grid.hpp"
@@ -22,7 +17,14 @@ void ValidateOnlyOneMissingPossibility(Possibilities const& possibilities)
     }
 }
 
-void RemoveRelatedCellsPossibilities(Possibilities& possibilities, std::vector<Position> const& relatedPositions, Grid& grid)
+void ValidatePossibilityValidInCell(Cell const& cell, Value possibility)
+{
+    const auto poss = cell.GetPossibilities();
+    if (!poss.Contains(possibility))
+        throw std::runtime_error("Possibility that is invalid in all remaining related cell");
+}
+
+void RemoveRelatedCellsPossibilities(Possibilities& possibilities, Range<Position> const& relatedPositions, const Grid& grid)
 {
     for(auto const& position : relatedPositions)
     {
@@ -35,7 +37,7 @@ void RemoveRelatedCellsPossibilities(Possibilities& possibilities, std::vector<P
     }
 }
 
-std::optional<Value> FindRelatedCellsMissingPossibility(std::vector<Position> const& relatedPositions, Grid& grid)
+std::optional<Value> FindRelatedCellsMissingPossibility(Cell const& cell, Range<Position> const& relatedPositions, const Grid& grid)
 {
     auto possibilities = Possibilities {grid.GetGridSize()};
 
@@ -46,7 +48,11 @@ std::optional<Value> FindRelatedCellsMissingPossibility(std::vector<Position> co
 
     ValidateOnlyOneMissingPossibility(possibilities);
 
-    return possibilities.GetValue();
+    const auto possibility = possibilities.GetValue();
+
+    ValidatePossibilityValidInCell(cell, *possibility);
+
+    return possibility;
 }
 } // anonymous namespace
 
@@ -55,17 +61,19 @@ UniquePossibilityFinderImpl::UniquePossibilityFinderImpl(
     m_RelatedPositionsGetter(std::move(relatedPositionsGetter))
 {}
 
-std::optional<Value> UniquePossibilityFinderImpl::FindUniquePossibility(Position const& cellPosition, Grid& grid) const
+std::optional<Value> UniquePossibilityFinderImpl::FindUniquePossibility(Cell const& cell, const Grid& grid) const
 {
-    std::array<std::vector<Position>, 3> allRelatedPositions {
-        m_RelatedPositionsGetter->GetRelatedBlockPositions(cellPosition, grid.GetGridSize(), grid.GetBlockSize()),
-        m_RelatedPositionsGetter->GetRelatedHorizontalPositions(cellPosition, grid.GetGridSize()),
-        m_RelatedPositionsGetter->GetRelatedVerticalPositions(cellPosition, grid.GetGridSize())
+    const auto& position = cell.GetPosition();
+
+    std::array<Range<Position>, 3> allRelatedPositions {
+        m_RelatedPositionsGetter->GetRelatedBlockPositions(position, grid.GetGridSize()),
+        m_RelatedPositionsGetter->GetRelatedHorizontalPositions(position, grid.GetGridSize()),
+        m_RelatedPositionsGetter->GetRelatedVerticalPositions(position, grid.GetGridSize())
     };
 
     for (const auto& relatedPositions : allRelatedPositions)
     {
-        auto missingPossibility = FindRelatedCellsMissingPossibility(relatedPositions, grid);
+        auto missingPossibility = FindRelatedCellsMissingPossibility(cell, relatedPositions, grid);
 
         if (missingPossibility)
             return missingPossibility;

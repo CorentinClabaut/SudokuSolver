@@ -2,12 +2,13 @@
 
 #include <memory>
 
+#include "FoundPositions.hpp"
+
 namespace sudoku
 {
 
-class ParallelPossibilitiesRemover;
-class ParallelUniquePossibilitySetter;
-struct FoundPositions;
+class GridPossibilitiesUpdater;
+class UniquePossibilitySetter;
 struct Grid;
 enum class GridStatus;
 
@@ -23,14 +24,14 @@ class GridSolverWithoutHypothesisImpl : public GridSolverWithoutHypothesis
 {
 public:
     GridSolverWithoutHypothesisImpl(
-            std::unique_ptr<ParallelPossibilitiesRemover> parallelPossibilitiesRemover,
-            std::unique_ptr<ParallelUniquePossibilitySetter> parallelUniquePossibilitySetter);
+            std::unique_ptr<GridPossibilitiesUpdater> gridPossibilitiesUpdater,
+            std::unique_ptr<UniquePossibilitySetter> uniquePossibilitySetter);
 
     GridStatus Solve(Grid& grid, FoundPositions& foundPositions) const override;
 
 private:
-    std::unique_ptr<ParallelPossibilitiesRemover> m_ParallelPossibilitiesRemover;
-    std::unique_ptr<ParallelUniquePossibilitySetter> m_ParallelUniquePossibilitySetter;
+    std::unique_ptr<GridPossibilitiesUpdater> m_GridPossibilitiesUpdater;
+    std::unique_ptr<UniquePossibilitySetter> m_UniquePossibilitySetter;
 };
 
 } /* namespace sudoku */

@@ -1,7 +1,6 @@
 #include <iostream>
 
 #include <chrono>
-#include <thread>
 
 #include <boost/range/irange.hpp>
 #include <boost/range/algorithm.hpp>
@@ -22,15 +21,18 @@ using namespace sudoku::test;
 // 1) Improvement in the way the detection of wrong new cells was made.
 // 2) Optimisation of Possibilities class to use bitset instead of unordered_set
 // 3) Utilisation of thread pool instead of always creating/deleting new threads
-// 3) Grid stores Cells instead of shared_ptr of Cells to avoid indirection
+// 4) Grid stores Cells instead of shared_ptr of Cells to avoid indirection
+// 5) Stop using multithreading because the overhead is too big
+// 6) Get related position at compile time
 
 // Execution time
 // Before any optimisation: 28'857 micro seconds
 // optimisation 1: 11'970 micro seconds
 // optimisation 2: 5'706 micro seconds
 // optimisation 3: 2'648 micro seconds
-// optimisation 3: 1'935 micro seconds
-// Grid vector of cells instead of ptr of cells: 2'066 micro seconds
+// optimisation 4: 1'935 micro seconds
+// optimisation 5: 754 micro seconds
+// optimisation 6: 441 micro seconds
 
 int GetMedian(std::vector<int> v)
 {
@@ -48,8 +50,7 @@ int main ()
 
     const auto positionsValues = CreatePositionsValues9x9();
 
-    const unsigned int parallelThreadsCount {std::thread::hardware_concurrency()};
-    auto gridSolver = GridSolverFactory::Make(parallelThreadsCount);
+    auto gridSolver = GridSolverFactory::Make();
 
     std::vector<int> durations;
 
@@ -76,7 +77,6 @@ int main ()
         }
     }
 
-    std::cout << "thread number: " << parallelThreadsCount << std::endl;
     std::cout << "number of execution: " << durations.size() << std::endl;
 
     const auto median = GetMedian(durations);

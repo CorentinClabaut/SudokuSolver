@@ -1,8 +1,7 @@
 #include "GridSolverWithoutHypothesis.hpp"
 
-#include "ParallelPossibilitiesRemover.hpp"
-#include "ParallelUniquePossibilitySetter.hpp"
-#include "FoundPositions.hpp"
+#include "GridPossibilitiesUpdater.hpp"
+#include "UniquePossibilitySetter.hpp"
 #include "GridStatus.hpp"
 #include "Grid.hpp"
 
@@ -17,30 +16,30 @@ bool AreAllCellsSet(Grid const& grid)
 } // anonymous namespace
 
 GridSolverWithoutHypothesisImpl::GridSolverWithoutHypothesisImpl(
-        std::unique_ptr<ParallelPossibilitiesRemover> parallelPossibilitiesRemover,
-        std::unique_ptr<ParallelUniquePossibilitySetter> parallelUniquePossibilitySetter) :
-    m_ParallelPossibilitiesRemover(std::move(parallelPossibilitiesRemover)),
-    m_ParallelUniquePossibilitySetter(std::move(parallelUniquePossibilitySetter))
+        std::unique_ptr<GridPossibilitiesUpdater> gridPossibilitiesUpdater,
+        std::unique_ptr<UniquePossibilitySetter> uniquePossibilitySetter) :
+    m_GridPossibilitiesUpdater(std::move(gridPossibilitiesUpdater)),
+    m_UniquePossibilitySetter(std::move(uniquePossibilitySetter))
 {}
 
 GridStatus GridSolverWithoutHypothesisImpl::Solve(Grid& grid, FoundPositions& foundPositions) const
 {
-    if (foundPositions.m_Queue.empty())
+    if (foundPositions.empty())
         throw std::runtime_error("Can't solve without hypothesis if no cell has been found");
 
     try
     {
-        while(!foundPositions.m_Queue.empty())
+        while(!foundPositions.empty())
         {
-            m_ParallelPossibilitiesRemover->UpdateGrid(foundPositions, grid);
+            m_GridPossibilitiesUpdater->UpdateGrid(foundPositions, grid);
 
-            m_ParallelUniquePossibilitySetter->SetCellsWithUniquePossibility(grid, foundPositions);
+            m_UniquePossibilitySetter->SetCellsWithUniquePossibility(grid, foundPositions);
         }
     }
     catch(std::exception const&)
     {
-        while(!foundPositions.m_Queue.empty())
-            foundPositions.m_Queue.pop();
+        while(!foundPositions.empty())
+            foundPositions.pop();
 
         return GridStatus::Wrong;
     }

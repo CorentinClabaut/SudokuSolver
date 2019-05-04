@@ -1,4 +1,4 @@
-#include "PossibilitiesRemover.hpp"
+#include "RelatedPossibilitiesRemover.hpp"
 
 #include <sstream>
 
@@ -9,14 +9,13 @@
 #include "Cell.hpp"
 #include "Position.hpp"
 #include "RelatedPositionsGetter.hpp"
-#include "FoundPositions.hpp"
 
 using namespace sudoku;
 
 namespace
 {
 
-std::vector<std::reference_wrapper<Cell>> GetCells(std::vector<Position> const& positions, Grid& grid)
+std::vector<std::reference_wrapper<Cell>> GetCells(Range<Position> const& positions, Grid& grid)
 {
     std::vector<std::reference_wrapper<Cell>> cells;
     cells.reserve(positions.size());
@@ -50,18 +49,18 @@ void UpdateRelatedCellsPossibilities(TRange const& notFoundRelatedCells, Value f
 
         if (cell.IsSet())
         {
-            foundPositions.Enqueue(cell.GetPosition());
+            foundPositions.push(cell.GetPosition());
         }
     }
 }
 
 } // anonymous namespace
 
-PossibilitiesRemoverImpl::PossibilitiesRemoverImpl(std::unique_ptr<RelatedPositionsGetter> relatedPositionsGetter) :
+RelatedPossibilitiesRemoverImpl::RelatedPossibilitiesRemoverImpl(std::unique_ptr<RelatedPositionsGetter> relatedPositionsGetter) :
     m_RelatedPositionsGetter(std::move(relatedPositionsGetter))
 {}
 
-void PossibilitiesRemoverImpl::UpdateGrid(Position const& newFoundPosition, Grid& grid, FoundPositions& foundPositions) const
+void RelatedPossibilitiesRemoverImpl::UpdateRelatedPossibilities(Position const& newFoundPosition, Grid& grid, FoundPositions& foundPositions) const
 {
     const auto foundValue = grid.GetCell(newFoundPosition).GetValue();
 
@@ -72,7 +71,7 @@ void PossibilitiesRemoverImpl::UpdateGrid(Position const& newFoundPosition, Grid
         throw std::runtime_error(error.str());
     }
 
-    const auto relatedPositions = m_RelatedPositionsGetter->GetAllRelatedPositions(newFoundPosition, grid.GetGridSize(), grid.GetBlockSize());
+    const auto relatedPositions = m_RelatedPositionsGetter->GetAllRelatedPositions(newFoundPosition, grid.GetGridSize());
     auto relatedCells = GetCells(relatedPositions, grid);
 
     const auto& [relatedFoundCells, relatedNotFoundCells] = PartitionFoundAndNotFoundCells(relatedCells);

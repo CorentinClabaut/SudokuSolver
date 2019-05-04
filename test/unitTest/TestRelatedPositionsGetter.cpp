@@ -3,8 +3,6 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-#include <boost/algorithm/cxx11/is_permutation.hpp>
-
 #include "Grid.hpp"
 
 using testing::Eq;
@@ -20,10 +18,11 @@ public:
     TestRelatedPositionsGetter()
     {}
 
-    void ExpectIsPermutation(std::vector<Position> const& lhs, std::vector<Position> const& rhs)
+    template<typename TContainer1, typename TContainer2>
+    void ExpectIsPermutation(TContainer1 const& lhs, TContainer2 const& rhs)
     {
         EXPECT_THAT(lhs.size(), Eq(rhs.size()));
-        EXPECT_TRUE(boost::algorithm::is_permutation(lhs, rhs.begin()));
+        EXPECT_TRUE(std::is_permutation(lhs.begin(), lhs.end(), rhs.begin()));
     }
 
     RelatedPositionsGetterImpl m_RelatedPositionsGetter;
@@ -62,9 +61,8 @@ TEST_F(TestRelatedPositionsGetter, GetRelatedVerticalPositions)
 TEST_F(TestRelatedPositionsGetter, GetRelatedBlockPositions)
 {
     const int gridSize {4};
-    const int blockSize {2};
 
-    auto relatedPositions = m_RelatedPositionsGetter.GetRelatedBlockPositions(Position{3, 2}, gridSize, blockSize);
+    auto relatedPositions = m_RelatedPositionsGetter.GetRelatedBlockPositions(Position{3, 2}, gridSize);
 
     std::vector<Position> expectedPositionsGroup {
         Position{2, 2},
@@ -78,9 +76,8 @@ TEST_F(TestRelatedPositionsGetter, GetRelatedBlockPositions)
 TEST_F(TestRelatedPositionsGetter, GetAllRelatedPositions)
 {
     const int gridSize {4};
-    const int blockSize {2};
 
-    auto relatedPositions = m_RelatedPositionsGetter.GetAllRelatedPositions(Position{3, 2}, gridSize, blockSize);
+    auto relatedPositions = m_RelatedPositionsGetter.GetAllRelatedPositions(Position{3, 2}, gridSize);
 
     std::vector<Position> expectedPositionsGroup {
         Position{3, 0},
@@ -94,7 +91,6 @@ TEST_F(TestRelatedPositionsGetter, GetAllRelatedPositions)
 
     ExpectIsPermutation(relatedPositions, expectedPositionsGroup);
 }
-
 
 } /* namespace test */
 } /* namespace sudoku */

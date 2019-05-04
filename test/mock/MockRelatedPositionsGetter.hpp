@@ -11,10 +11,10 @@ namespace test
 class MockRelatedPositionsGetter : public RelatedPositionsGetter
 {
 public:
-    MOCK_CONST_METHOD2(GetRelatedHorizontalPositions, std::vector<Position>(Position const& selectedPosition, int gridSize));
-    MOCK_CONST_METHOD2(GetRelatedVerticalPositions, std::vector<Position>(Position const& selectedPosition, int gridSize));
-    MOCK_CONST_METHOD3(GetRelatedBlockPositions, std::vector<Position>(Position const& selectedPosition, int gridSize, int blockSize));
-    MOCK_CONST_METHOD3(GetAllRelatedPositions, std::vector<Position>(Position const& selectedPosition, int gridSize, int blockSize));
+    MOCK_CONST_METHOD2(GetRelatedHorizontalPositions, Range<Position>(Position const& selectedPosition, int gridSize));
+    MOCK_CONST_METHOD2(GetRelatedVerticalPositions, Range<Position>(Position const& selectedPosition, int gridSize));
+    MOCK_CONST_METHOD2(GetRelatedBlockPositions, Range<Position>(Position const& selectedPosition, int gridSize));
+    MOCK_CONST_METHOD2(GetAllRelatedPositions, Range<Position>(Position const& selectedPosition, int gridSize));
 };
 
 } /* namespace test */

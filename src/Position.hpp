@@ -12,7 +12,7 @@ struct Position
     int m_Col;
 };
 
-inline bool operator==(Position const& lhs, Position const& rhs)
+inline constexpr bool operator==(Position const& lhs, Position const& rhs)
 {
     return std::tie(lhs.m_Col, lhs.m_Row)
         == std::tie(rhs.m_Col, rhs.m_Row);

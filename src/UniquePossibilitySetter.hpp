@@ -1,22 +1,24 @@
 #pragma once
 
-#include <vector>
+#include <memory>
 
-#include "Cell.hpp"
+#include "Value.hpp"
+#include "FoundPositions.hpp"
 
 namespace sudoku
 {
 
+class Grid;
 class UniquePossibilityFinder;
-struct FoundPositions;
-struct Grid;
+class PositionIter;
+struct Position;
 
 class UniquePossibilitySetter
 {
 public:
     virtual ~UniquePossibilitySetter() = default;
 
-    virtual void SetIfUniquePossibility(Position const& position, Grid& grid, FoundPositions& foundPositions) const = 0;
+    virtual void SetCellsWithUniquePossibility(Grid& grid, FoundPositions& foundPositions) = 0;
 };
 
 class UniquePossibilitySetterImpl : public UniquePossibilitySetter
@@ -25,7 +27,7 @@ public:
     UniquePossibilitySetterImpl(
             std::unique_ptr<UniquePossibilityFinder> uniquePossibilityFinder);
 
-    void SetIfUniquePossibility(Position const& position, Grid& grid, FoundPositions& foundPositions) const override;
+    void SetCellsWithUniquePossibility(Grid& grid, FoundPositions& foundPositions) override;
 
 private:
     std::unique_ptr<UniquePossibilityFinder> m_UniquePossibilityFinder;

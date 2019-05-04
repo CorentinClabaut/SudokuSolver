@@ -59,8 +59,7 @@ void PrintCell(std::ostream& os, Cell const& cell)
 } // anonymous namespace
 
 Grid::Grid(int gridSize) :
-    m_GridSize(gridSize),
-    m_BlockSize(CalculateBlockSize(gridSize))
+    m_GridSize(gridSize)
 {
     m_Cells.reserve(gridSize * gridSize);
 
@@ -77,8 +76,7 @@ Grid::Grid(int gridSize) :
 }
 
 Grid::Grid(Grid const& grid) :
-    m_GridSize(grid.GetGridSize()),
-    m_BlockSize(grid.GetBlockSize())
+    m_GridSize(grid.GetGridSize())
 {
     m_Cells.reserve(grid.GetGridSize() * grid.GetGridSize());
 
@@ -107,21 +105,18 @@ int Grid::GetGridSize() const
     return m_GridSize;
 }
 
-int Grid::GetBlockSize() const
-{
-    return m_BlockSize;
-}
-
 std::ostream& operator<<(std::ostream& os, Grid const& grid)
 {
+    const auto blockSize = CalculateBlockSize(grid.GetGridSize());
+
     for(auto row : boost::irange(0, grid.GetGridSize()))
     {
-        if (row % grid.GetBlockSize() == 0)
-            PrintHorizontalLine(os, grid.GetGridSize(), grid.GetBlockSize());
+        if (row % blockSize == 0)
+            PrintHorizontalLine(os, grid.GetGridSize(), blockSize);
 
         for(auto col : boost::irange(0, grid.GetGridSize()))
         {
-            if (col % grid.GetBlockSize() == 0)
+            if (col % blockSize == 0)
                 PrintVerticalSeparator(os);
 
             PrintCell(os, grid.GetCell(Position{row, col}));
@@ -131,7 +126,7 @@ std::ostream& operator<<(std::ostream& os, Grid const& grid)
         os << std::endl;
     }
 
-    PrintHorizontalLine(os, grid.GetGridSize(), grid.GetBlockSize());
+    PrintHorizontalLine(os, grid.GetGridSize(), blockSize);
 
     return os;
 }

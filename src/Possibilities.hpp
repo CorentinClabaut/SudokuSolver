@@ -37,6 +37,8 @@ public:
 
     Value GetPossibilityLeft() const;
 
+    bool Contains(Value value) const;
+
 private:
     void RemovePossibilitiesImpl(PossibilitiesBitSet const& possibilities);
 

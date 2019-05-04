@@ -9,7 +9,7 @@ namespace sudoku
 {
 
 class RelatedPositionsGetter;
-struct Position;
+class Cell;
 struct Grid;
 
 class UniquePossibilityFinder
@@ -17,7 +17,7 @@ class UniquePossibilityFinder
 public:
     virtual ~UniquePossibilityFinder() = default;
 
-    virtual std::optional<Value> FindUniquePossibility(Position const& cellPosition, Grid& grid) const = 0;
+    virtual std::optional<Value> FindUniquePossibility(Cell const& cell, const Grid& grid) const = 0;
 };
 
 class UniquePossibilityFinderImpl : public UniquePossibilityFinder
@@ -25,7 +25,7 @@ class UniquePossibilityFinderImpl : public UniquePossibilityFinder
 public:
     UniquePossibilityFinderImpl(std::unique_ptr<RelatedPositionsGetter> relatedPositionsGetter);
 
-    std::optional<Value> FindUniquePossibility(Position const& cellPosition, Grid& grid) const override;
+    std::optional<Value> FindUniquePossibility(Cell const& cell, const Grid& grid) const override;
 
 private:
     std::unique_ptr<RelatedPositionsGetter> m_RelatedPositionsGetter;

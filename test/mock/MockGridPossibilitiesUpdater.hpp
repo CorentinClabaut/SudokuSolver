@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ParallelPossibilitiesRemover.hpp"
+#include "GridPossibilitiesUpdater.hpp"
 #include <gmock/gmock.h>
 
 namespace sudoku
@@ -8,7 +8,7 @@ namespace sudoku
 namespace test
 {
 
-class MockParallelPossibilitiesRemover : public ParallelPossibilitiesRemover
+class MockGridPossibilitiesUpdater : public GridPossibilitiesUpdater
 {
 public:
     MOCK_METHOD2(UpdateGrid, void(FoundPositions& foundPositions, Grid& grid));

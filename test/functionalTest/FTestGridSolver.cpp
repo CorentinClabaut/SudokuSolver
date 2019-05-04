@@ -36,10 +36,9 @@ TEST_F(FTestGridSolver, Solve4x4)
     const auto positionsValues = CreatePositionsValues4x4();
 
     const int testExecutionCount = 50;
-    for(int testId : boost::irange(1, testExecutionCount + 1))
+    for([[gnu::unused]] int i : boost::irange(0, testExecutionCount))
     {
-        const int parallelThreadsCount {testId % 5 + 1};
-        auto gridSolver = GridSolverFactory::Make(parallelThreadsCount);
+        auto gridSolver = GridSolverFactory::Make();
 
         auto grid = CreateGrid(gridSize, KeepRandomCells(positionsValues, cellsKept));
 
@@ -65,11 +64,10 @@ TEST_F(FTestGridSolver, Solve9x9)
 
     const auto positionsValues = CreatePositionsValues9x9();
 
-    const int testExecutionCount = 1000;
-    for(int testId : boost::irange(1, testExecutionCount + 1))
+    const int testExecutionCount = 500;
+    for([[gnu::unused]] int i : boost::irange(0, testExecutionCount))
     {
-        const int parallelThreadsCount {testId % 5 + 1};
-        auto gridSolver = GridSolverFactory::Make(parallelThreadsCount);
+        auto gridSolver = GridSolverFactory::Make();
 
         auto grid = CreateGrid(gridSize, KeepRandomCells(positionsValues, cellsKept));
 
@@ -96,10 +94,9 @@ TEST_F(FTestGridSolver, SolveWrong9x9)
     const auto positionsValues = CreatePositionsValues9x9();
 
     const int testExecutionCount = 20;
-    for(int testId : boost::irange(1, testExecutionCount + 1))
+    for([[gnu::unused]] int i : boost::irange(0, testExecutionCount))
     {
-        const int parallelThreadsCount {testId % 5 + 1};
-        auto gridSolver = GridSolverFactory::Make(parallelThreadsCount);
+        auto gridSolver = GridSolverFactory::Make();
 
         auto gridRandCells = KeepRandomCells(positionsValues, cellsKept);
         gridRandCells.front().second = ((gridRandCells.front().second + 1) % gridSize) + 1;

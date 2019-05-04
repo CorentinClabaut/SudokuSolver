@@ -2,11 +2,12 @@
 
 #include <memory>
 
+#include "FoundPositions.hpp"
+
 namespace sudoku
 {
 
 class GridSolverWithoutHypothesis;
-struct FoundPositions;
 struct Grid;
 
 class GridSolver

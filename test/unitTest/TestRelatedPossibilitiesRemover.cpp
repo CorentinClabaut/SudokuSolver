@@ -1,4 +1,4 @@
-#include "PossibilitiesRemover.hpp"
+#include "RelatedPossibilitiesRemover.hpp"
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -21,37 +21,30 @@ namespace sudoku
 namespace test
 {
 
-class TestPossibilitiesRemover : public ::testing::Test
+class TestRelatedPossibilitiesRemover : public ::testing::Test
 {
 public:
-    TestPossibilitiesRemover()
+    TestRelatedPossibilitiesRemover()
     {}
 
     void SetupCel1x1RelatedPositionsGetter()
     {
-        EXPECT_CALL(*m_RelatedPositionsGetter, GetAllRelatedPositions(Position{1, 1}, 4, 2))
-                    .WillRepeatedly(Return(std::vector<Position>{{1, 0}, {1, 2}, {1, 3}, {0, 1}, {2, 1}, {3, 1}, {0, 0}}));
+        static const std::array<Position, 7> m_1x1AllRelatedPositions {
+            Position{1, 0},
+            Position{1, 2},
+            Position{1, 3},
+            Position{0, 1},
+            Position{2, 1},
+            Position{3, 1},
+            Position{0, 0}};
+
+        EXPECT_CALL(*m_RelatedPositionsGetter, GetAllRelatedPositions(Position{1, 1}, 4))
+                .WillRepeatedly(Return(Range{m_1x1AllRelatedPositions}));
     }
 
-    std::unique_ptr<PossibilitiesRemover> MakePossibilitiesRemover()
+    std::unique_ptr<RelatedPossibilitiesRemover> MakeRelatedPossibilitiesRemover()
     {
-        return std::make_unique<PossibilitiesRemoverImpl>(std::move(m_RelatedPositionsGetter));
-    }
-
-    template<typename T>
-    void ExpectQueueEqual(std::queue<T>& queue, std::vector<T> const& vector)
-    {
-        EXPECT_THAT(queue.size(), Eq(vector.size()));
-
-        auto vectorIter = vector.begin();
-        while (!queue.empty())
-        {
-            auto val = queue.front();
-            EXPECT_THAT(val, Eq(*vectorIter));
-            queue.pop();
-
-            vectorIter++;
-        }
+        return std::make_unique<RelatedPossibilitiesRemoverImpl>(std::move(m_RelatedPositionsGetter));
     }
 
     Grid CreateExpectedGridWithValuePos1x1SetTo(Value value)
@@ -75,7 +68,7 @@ public:
     std::unique_ptr<MockRelatedPositionsGetter> m_RelatedPositionsGetter = std::make_unique<MockRelatedPositionsGetter>();
 };
 
-TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells)
+TEST_F(TestRelatedPossibilitiesRemover, RemoveSetValueFromRelatedCells)
 {
     const Value cellValue {3};
 
@@ -88,16 +81,16 @@ TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells)
     auto& cell = grid.GetCell(currentPosition);
     cell.SetValue(cellValue);
 
-    MakePossibilitiesRemover()->UpdateGrid(currentPosition, grid, foundPositions);
+    MakeRelatedPossibilitiesRemover()->UpdateRelatedPossibilities(currentPosition, grid, foundPositions);
 
     auto expectedGrid = CreateExpectedGridWithValuePos1x1SetTo(cellValue);
 
     EXPECT_THAT(grid, Eq(expectedGrid));
 
-    EXPECT_TRUE(foundPositions.m_Queue.empty());
+    EXPECT_TRUE(foundPositions.empty());
 }
 
-TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells_RelatedCellNotIdentical)
+TEST_F(TestRelatedPossibilitiesRemover, RemoveSetValueFromRelatedCells_RelatedCellNotIdentical)
 {
     const Value cellValue {3};
 
@@ -113,17 +106,17 @@ TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells_RelatedCellNotId
     const Value otherCellFoundValue {1};
     grid.GetCell(Position{0, 0}).SetValue(otherCellFoundValue);
 
-    MakePossibilitiesRemover()->UpdateGrid(currentPosition, grid, foundPositions);
+    MakeRelatedPossibilitiesRemover()->UpdateRelatedPossibilities(currentPosition, grid, foundPositions);
 
     auto expectedGrid = CreateExpectedGridWithValuePos1x1SetTo(cellValue);
     expectedGrid.GetCell(Position{0, 0}).SetValue(otherCellFoundValue);
 
     EXPECT_THAT(grid, Eq(expectedGrid));
 
-    EXPECT_TRUE(foundPositions.m_Queue.empty());
+    EXPECT_TRUE(foundPositions.empty());
 }
 
-TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells_RelatedCellAlreadySetWithSameValue)
+TEST_F(TestRelatedPossibilitiesRemover, RemoveSetValueFromRelatedCells_RelatedCellAlreadySetWithSameValue)
 {
     const Value cellValue {3};
 
@@ -138,10 +131,10 @@ TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells_RelatedCellAlrea
 
     grid.GetCell(Position{0, 0}).SetValue(cellValue);
 
-    EXPECT_THROW(MakePossibilitiesRemover()->UpdateGrid(currentPosition, grid, foundPositions), std::exception);
+    EXPECT_THROW(MakeRelatedPossibilitiesRemover()->UpdateRelatedPossibilities(currentPosition, grid, foundPositions), std::exception);
 }
 
-TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells_FindNewCellValue)
+TEST_F(TestRelatedPossibilitiesRemover, RemoveSetValueFromRelatedCells_FindNewCellValue)
 {
     const Value cellValue {3};
 
@@ -157,17 +150,18 @@ TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells_FindNewCellValue
     const Value NewFoundValue {2};
     RemoveAllCellPossibilitiesBut(grid.GetCell(Position{1, 3}), {cellValue, NewFoundValue});
 
-    MakePossibilitiesRemover()->UpdateGrid(currentPosition, grid, foundPositions);
+    MakeRelatedPossibilitiesRemover()->UpdateRelatedPossibilities(currentPosition, grid, foundPositions);
 
     auto expectedGrid = CreateExpectedGridWithValuePos1x1SetTo(cellValue);
     expectedGrid.GetCell(Position{1, 3}).SetValue(NewFoundValue);
 
     EXPECT_THAT(grid, Eq(expectedGrid));
 
-    ExpectQueueEqual(foundPositions.m_Queue, {Position {1, 3}});
+    auto pushedPositions = QueueToVector(foundPositions);
+    EXPECT_THAT(pushedPositions, Eq(std::vector<Position>{Position {1, 3}}));
 }
 
-TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells_CellValueNotSet)
+TEST_F(TestRelatedPossibilitiesRemover, RemoveSetValueFromRelatedCells_CellValueNotSet)
 {
     Grid grid {m_GridSize};
     FoundPositions foundPositions;
@@ -176,7 +170,7 @@ TEST_F(TestPossibilitiesRemover, RemoveSetValueFromRelatedCells_CellValueNotSet)
 
     Position currentPosition {1, 1};
 
-    EXPECT_THROW(MakePossibilitiesRemover()->UpdateGrid(currentPosition, grid, foundPositions), std::exception);
+    EXPECT_THROW(MakeRelatedPossibilitiesRemover()->UpdateRelatedPossibilities(currentPosition, grid, foundPositions), std::exception);
 }
 
 } /* namespace test */

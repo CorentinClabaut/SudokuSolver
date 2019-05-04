@@ -2,8 +2,8 @@
 
 #include <memory>
 
-#include "ThreadSafePossibilities.hpp"
 #include "Position.hpp"
+#include "Possibilities.hpp"
 
 namespace sudoku
 {
@@ -22,7 +22,7 @@ public:
     std::optional<Value> GetValue() const;
 
     bool IsSet() const;
-    Possibilities GetPossibilities() const;
+    const Possibilities& GetPossibilities() const;
     int GetNumberPossibilitiesLeft() const;
 
     Position const& GetPosition() const;
@@ -30,7 +30,7 @@ public:
     bool operator==(Cell const& cell) const;
 
 private:
-    ThreadSafePossibilities m_Possibilities;
+    Possibilities m_Possibilities;
     const Position m_Position;
 };
 

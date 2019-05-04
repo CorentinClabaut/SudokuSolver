@@ -42,9 +42,9 @@ bool Cell::IsSet() const
     return m_Possibilities.OnlyOnePossibilityLeft();
 }
 
-Possibilities Cell::GetPossibilities() const
+const Possibilities& Cell::GetPossibilities() const
 {
-    return m_Possibilities.GetPossibilities();
+    return m_Possibilities;
 }
 
 int Cell::GetNumberPossibilitiesLeft() const
@@ -59,6 +59,6 @@ const Position& Cell::GetPosition() const
 
 bool Cell::operator==(Cell const& cell) const
 {
-    return m_Possibilities.GetPossibilities() == cell.m_Possibilities.GetPossibilities()
+    return m_Possibilities == cell.m_Possibilities
             && m_Position == cell.m_Position;
 }
