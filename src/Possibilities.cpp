@@ -2,6 +2,41 @@
 
 using namespace sudoku;
 
+namespace
+{
+
+constexpr int Pow(int value, int power)
+{
+    return power == 0 ? 1 : value * Pow(value, power - 1);
+}
+
+constexpr int GetNumBitSet(int value)
+{
+    int numBitSet = 0;
+
+    for(; value; value &= value - 1)
+        ++numBitSet;
+
+    return numBitSet;
+}
+
+template<int TNumPossibilities>
+constexpr std::array<int, Pow(2, TNumPossibilities)> CreateNumBitSetLookupTable()
+{
+    std::array<int, Pow(2, TNumPossibilities)> numBitSetLookupTable {};
+
+    for(int i = 0; i < Pow(2, TNumPossibilities); i++)
+    {
+        numBitSetLookupTable[i] = GetNumBitSet(i);
+    }
+
+    return numBitSetLookupTable;
+}
+
+constexpr std::array<int, Pow(2, constants::MaxGridSize)> NumBitSetLookupTable {CreateNumBitSetLookupTable<constants::MaxGridSize>()};
+
+} // anonymous namespace
+
 Possibilities::Possibilities(int gridSize)
 {
     if (gridSize > constants::MaxGridSize)
@@ -70,7 +105,7 @@ bool Possibilities::Contains(Value value) const
 
 int Possibilities::GetNumberPossibilitiesLeft() const
 {
-    return m_Possibilities.count();
+    return NumBitSetLookupTable[m_Possibilities.to_ulong()];
 }
 
 bool Possibilities::OnlyOnePossibilityLeft() const
@@ -95,5 +130,5 @@ void Possibilities::RemovePossibilitiesImpl(PossibilitiesBitSet const& possibili
 
 bool Possibilities::OnlyOnePossibilityLeftImpl() const
 {
-    return m_Possibilities.count() == 1;
+    return GetNumberPossibilitiesLeft() == 1;
 }

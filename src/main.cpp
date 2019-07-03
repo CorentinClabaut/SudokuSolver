@@ -24,6 +24,7 @@ using namespace sudoku::test;
 // 4) Grid stores Cells instead of shared_ptr of Cells to avoid indirection
 // 5) Stop using multithreading because the overhead is too big
 // 6) Get related position at compile time
+// 6) Create lookup table creating at compile time for number possibility left
 
 // Execution time
 // Before any optimisation: 28'857 micro seconds
@@ -33,6 +34,7 @@ using namespace sudoku::test;
 // optimisation 4: 1'935 micro seconds
 // optimisation 5: 754 micro seconds
 // optimisation 6: 441 micro seconds
+// optimisation 7: 313 micro seconds
 
 int GetMedian(std::vector<int> v)
 {
