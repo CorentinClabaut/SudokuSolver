@@ -22,7 +22,7 @@ public:
     std::optional<Value> GetValue() const;
 
     bool IsSet() const;
-    const Possibilities& GetPossibilities() const;
+    Possibilities const& GetPossibilities() const;
     int GetNumberPossibilitiesLeft() const;
 
     Position const& GetPosition() const;

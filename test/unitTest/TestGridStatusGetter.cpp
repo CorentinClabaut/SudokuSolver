@@ -7,7 +7,6 @@
 
 #include "Grid.hpp"
 #include "GridStatus.hpp"
-#include "mock/MockRelatedPositionsGetter.hpp"
 #include "utils/Utils.hpp"
 
 using testing::_;
@@ -22,10 +21,6 @@ namespace sudoku
 namespace test
 {
 
-/*
-Note: This tests depend on RelatedPositionsGetter
-*/
-
 class TestGridStatusGetter : public ::testing::Test
 {
 public:
@@ -34,10 +29,8 @@ public:
 
     std::unique_ptr<GridStatusGetter> MakeGridStatusGetter()
     {
-        return std::make_unique<GridStatusGetterImpl>(std::move(m_RelatedPositionsGetter));
+        return std::make_unique<GridStatusGetterImpl>();
     }
-
-    std::unique_ptr<RelatedPositionsGetter> m_RelatedPositionsGetter = std::make_unique<RelatedPositionsGetterImpl>();
 };
 
 TEST_F(TestGridStatusGetter, NoCellsSet)

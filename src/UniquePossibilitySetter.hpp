@@ -4,6 +4,7 @@
 
 #include "Value.hpp"
 #include "FoundPositions.hpp"
+#include "RelatedPositionsGetter.hpp"
 
 namespace sudoku
 {
@@ -18,19 +19,16 @@ class UniquePossibilitySetter
 public:
     virtual ~UniquePossibilitySetter() = default;
 
-    virtual void SetCellsWithUniquePossibility(Grid& grid, FoundPositions& foundPositions) = 0;
+    virtual void SetCellsWithUniquePossibility(Grid& grid, FoundPositions& foundPositions) const = 0;
 };
 
 class UniquePossibilitySetterImpl : public UniquePossibilitySetter
 {
 public:
-    UniquePossibilitySetterImpl(
-            std::unique_ptr<UniquePossibilityFinder> uniquePossibilityFinder);
-
-    void SetCellsWithUniquePossibility(Grid& grid, FoundPositions& foundPositions) override;
+    void SetCellsWithUniquePossibility(Grid& grid, FoundPositions& foundPositions) const override;
 
 private:
-    std::unique_ptr<UniquePossibilityFinder> m_UniquePossibilityFinder;
+    const RelatedPositionsGetterImpl m_RelatedPositionsGetter;
 };
 
 } /* namespace sudoku */

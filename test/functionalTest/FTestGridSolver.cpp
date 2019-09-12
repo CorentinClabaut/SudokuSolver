@@ -22,7 +22,7 @@ class FTestGridSolver : public ::testing::Test
 {
 public:
     FTestGridSolver() :
-        m_GridStatusGetter(std::make_unique<RelatedPositionsGetterImpl>())
+        m_GridStatusGetter()
     {}
 
     GridStatusGetterImpl m_GridStatusGetter;
@@ -35,7 +35,7 @@ TEST_F(FTestGridSolver, Solve4x4)
 
     const auto positionsValues = CreatePositionsValues4x4();
 
-    const int testExecutionCount = 50;
+    const int testExecutionCount = 100;
     for([[gnu::unused]] int i : boost::irange(0, testExecutionCount))
     {
         auto gridSolver = GridSolverFactory::Make();
@@ -64,7 +64,7 @@ TEST_F(FTestGridSolver, Solve9x9)
 
     const auto positionsValues = CreatePositionsValues9x9();
 
-    const int testExecutionCount = 500;
+    const int testExecutionCount = 1000;
     for([[gnu::unused]] int i : boost::irange(0, testExecutionCount))
     {
         auto gridSolver = GridSolverFactory::Make();
@@ -93,7 +93,7 @@ TEST_F(FTestGridSolver, SolveWrong9x9)
 
     const auto positionsValues = CreatePositionsValues9x9();
 
-    const int testExecutionCount = 20;
+    const int testExecutionCount = 50;
     for([[gnu::unused]] int i : boost::irange(0, testExecutionCount))
     {
         auto gridSolver = GridSolverFactory::Make();

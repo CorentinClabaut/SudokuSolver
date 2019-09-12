@@ -95,7 +95,7 @@ Cell& Grid::GetCell(Position const& position)
     return m_Cells.at(position.m_Row * m_GridSize + position.m_Col);
 }
 
-const Cell& Grid::GetCell(Position const& position) const
+Cell const& Grid::GetCell(Position const& position) const
 {
     return m_Cells.at(position.m_Row * m_GridSize + position.m_Col);
 }
@@ -131,7 +131,7 @@ std::ostream& operator<<(std::ostream& os, Grid const& grid)
     return os;
 }
 
-bool operator==(const Grid& lhs, const Grid& rhs)
+bool operator==(Grid const& lhs, Grid const& rhs)
 {
     return lhs.GetGridSize() == rhs.GetGridSize()
             && std::equal(lhs.begin(), lhs.end(), rhs.begin());

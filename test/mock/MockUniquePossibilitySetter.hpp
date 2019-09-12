@@ -11,7 +11,7 @@ namespace test
 class MockUniquePossibilitySetter : public UniquePossibilitySetter
 {
 public:
-    MOCK_METHOD2(SetCellsWithUniquePossibility, void(Grid& grid, FoundPositions& foundPositions));
+    MOCK_CONST_METHOD2(SetCellsWithUniquePossibility, void(Grid& grid, FoundPositions& foundPositions));
 };
 
 } /* namespace test */

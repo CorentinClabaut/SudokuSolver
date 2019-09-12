@@ -1,10 +1,1 @@
-
-namespace sudoku
-{
-
-namespace constants
-{
-constexpr int MaxGridSize {9};
-} // namespace constants
-
-} // namespace sudoku
+#define MaxGridSize 9 /* should be inline constexpr with later compiler */

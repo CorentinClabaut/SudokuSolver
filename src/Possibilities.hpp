@@ -9,17 +9,16 @@
 namespace sudoku
 {
 
+using PossibilitiesBitSet = std::bitset<MaxGridSize>;
+
 class Possibilities
 {
 public:
-    using PossibilitiesBitSet = std::bitset<constants::MaxGridSize>;
-
     Possibilities(int gridSize);
+    Possibilities(PossibilitiesBitSet const& possibilities);
 
-    Possibilities(Possibilities const& possibilities);
-    Possibilities& operator=(Possibilities const& possibilities);
-
-    void RemovePossibilities(Possibilities const& possibilities);
+    Possibilities(Possibilities const& possibilities) = default;
+    Possibilities& operator=(Possibilities const& possibilities) = default;
 
     void RemovePossibility(Value const& value);
 
@@ -27,7 +26,7 @@ public:
 
     std::optional<Value> GetValue() const;
 
-    int GetNumberPossibilitiesLeft() const;
+    int Count() const;
 
     bool OnlyOnePossibilityLeft() const;
 
@@ -39,9 +38,9 @@ public:
 
     bool Contains(Value value) const;
 
-private:
-    void RemovePossibilitiesImpl(PossibilitiesBitSet const& possibilities);
+    PossibilitiesBitSet const& GetBitSet() const;
 
+private:
     bool OnlyOnePossibilityLeftImpl() const;
 
     PossibilitiesBitSet m_Possibilities;

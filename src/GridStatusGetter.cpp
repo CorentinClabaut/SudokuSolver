@@ -8,7 +8,6 @@
 #include <boost/algorithm/cxx11/none_of.hpp>
 
 #include "Grid.hpp"
-#include "RelatedPositionsGetter.hpp"
 #include "GridStatus.hpp"
 
 using namespace sudoku;
@@ -45,10 +44,6 @@ bool AreAllCellsSet(Grid& grid)
 }
 } // anonymous namespace
 
-GridStatusGetterImpl::GridStatusGetterImpl(std::unique_ptr<RelatedPositionsGetter> relatedPositionsGetter) :
-    m_RelatedPositionsGetter(std::move(relatedPositionsGetter))
-{}
-
 GridStatus GridStatusGetterImpl::GetStatus(Grid& grid) const
 {
     if (!AreSetCellsValid(grid))
@@ -66,7 +61,7 @@ bool GridStatusGetterImpl::AreSetCellsValid(Grid& grid) const
 
 std::vector<Value> GridStatusGetterImpl::GetRelatedCellsSetValue(Position const& selectedPosition, Grid& grid) const
 {
-    auto relatedPositions = m_RelatedPositionsGetter->GetAllRelatedPositions(selectedPosition, grid.GetGridSize());
+    auto relatedPositions = m_RelatedPositionsGetter.GetAllRelatedPositions(selectedPosition, grid.GetGridSize());
 
     return GetSetCellValues(relatedPositions, grid);
 }

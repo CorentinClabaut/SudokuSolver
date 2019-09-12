@@ -8,7 +8,6 @@
 #include "Grid.hpp"
 #include "Cell.hpp"
 #include "Position.hpp"
-#include "RelatedPositionsGetter.hpp"
 
 using namespace sudoku;
 
@@ -56,10 +55,6 @@ void UpdateRelatedCellsPossibilities(TRange const& notFoundRelatedCells, Value f
 
 } // anonymous namespace
 
-RelatedPossibilitiesRemoverImpl::RelatedPossibilitiesRemoverImpl(std::unique_ptr<RelatedPositionsGetter> relatedPositionsGetter) :
-    m_RelatedPositionsGetter(std::move(relatedPositionsGetter))
-{}
-
 void RelatedPossibilitiesRemoverImpl::UpdateRelatedPossibilities(Position const& newFoundPosition, Grid& grid, FoundPositions& foundPositions) const
 {
     const auto foundValue = grid.GetCell(newFoundPosition).GetValue();
@@ -71,10 +66,10 @@ void RelatedPossibilitiesRemoverImpl::UpdateRelatedPossibilities(Position const&
         throw std::runtime_error(error.str());
     }
 
-    const auto relatedPositions = m_RelatedPositionsGetter->GetAllRelatedPositions(newFoundPosition, grid.GetGridSize());
+    const auto relatedPositions = m_RelatedPositionsGetter.GetAllRelatedPositions(newFoundPosition, grid.GetGridSize());
     auto relatedCells = GetCells(relatedPositions, grid);
 
-    const auto& [relatedFoundCells, relatedNotFoundCells] = PartitionFoundAndNotFoundCells(relatedCells);
+    auto const& [relatedFoundCells, relatedNotFoundCells] = PartitionFoundAndNotFoundCells(relatedCells);
 
     ValidateNoFoundCellSetWithValue(relatedFoundCells, *foundValue);
 

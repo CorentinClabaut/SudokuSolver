@@ -4,6 +4,39 @@
 
 using namespace sudoku;
 
+template<int TPositionsCount, int TGroupsCount>
+constexpr std::array<Range<Position>, TGroupsCount> CreateArrayOfRanges(std::array<std::array<Position, TPositionsCount>, TGroupsCount> const& allGroupsPositions)
+{
+    std::array<Range<Position>, TGroupsCount> ranges {};
+
+    auto it = ranges.begin();
+
+    for (auto const& group : allGroupsPositions)
+    {
+        *it = Range<Position> {group};
+        it++;
+    }
+
+    return ranges;
+}
+
+template<int TGridSize, int TGroupSize>
+struct Ranges
+{
+    constexpr Ranges(std::array<std::array<Position, TGridSize>, TGroupSize> allGroupsPositions) :
+        m_AllGroupsPositions(allGroupsPositions),
+        m_ArrayOfRanges(CreateArrayOfRanges<TGridSize, TGroupSize>(m_AllGroupsPositions)),
+        m_Ranges(m_ArrayOfRanges)
+    {}
+
+    constexpr Range<Position> const& operator[](int i) const { return m_Ranges[i]; }
+
+    std::array<std::array<Position, TGridSize>, TGroupSize> m_AllGroupsPositions;
+    std::array<Range<Position>, TGroupSize> m_ArrayOfRanges;
+    Range<Range<Position>> m_Ranges;
+};
+
+
 constexpr int isqrt_impl(int sq, int dlt, int value)
 {
     return sq <= value ? isqrt_impl(sq+dlt, dlt+2, value) : (dlt >> 1) - 1;
@@ -31,9 +64,6 @@ constexpr int GetNumberOfRelatedPositionInGroup(int gridSize)
     return gridSize - 1;
 }
 
-template<int TSize>
-using ArrayRelatedPosition = std::array<Position, TSize>;
-
 template<class Range>
 constexpr bool any_of_equal(Range range, typename Range::value_type comp)
 {
@@ -52,6 +82,28 @@ constexpr int RoundDown(int value, int multiplier)
 }
 
 template<int TGridSize>
+constexpr std::array<Position, TGridSize> GetAllPositions(
+        int begRow,
+        int rows,
+        int begCol,
+        int cols)
+{
+    std::array<Position, TGridSize> related {};
+    auto relatedIter = related.begin();
+
+    for(int row = begRow; row < begRow + rows; row++)
+    {
+        for(int col = begCol; col < begCol + cols; col++)
+        {
+            *relatedIter = Position {row, col};
+            relatedIter++;
+        }
+    }
+
+    return related;
+}
+
+template<int TGridSize>
 constexpr std::array<Position, GetNumberOfRelatedPositionInGroup(TGridSize)> GetAllPositionsButSelectedOne(
         int begRow,
         int rows,
@@ -60,21 +112,16 @@ constexpr std::array<Position, GetNumberOfRelatedPositionInGroup(TGridSize)> Get
         Position const& currentPosition)
 {
     std::array<Position, GetNumberOfRelatedPositionInGroup(TGridSize)> related {};
+
     auto relatedIter = related.begin();
 
-    for(int row = begRow; row < begRow + rows; row++)
+    for (auto const& pos : GetAllPositions<TGridSize>(begRow, rows, begCol, cols))
     {
-        for(int col = begCol; col < begCol + cols; col++)
-        {
-            Position pos {row, col};
+        if (pos == currentPosition)
+            continue;
 
-            if (pos == currentPosition)
-                continue;
-
-            *relatedIter = pos;
-
-            relatedIter++;
-        }
+        *relatedIter = pos;
+        relatedIter++;
     }
 
     return related;
@@ -102,19 +149,16 @@ constexpr std::array<Position, GetNumberOfRelatedPositionInGroup(TGridSize)> Cre
     return GetAllPositionsButSelectedOne<TGridSize>(beginRow, blockSize, beginCol, blockSize, currentPosition);
 }
 
-constexpr int RelatedPositionTypeCount = 3;
-
 template<int TGridSize>
-constexpr std::array<Position, GetAllRelatedPositionNumber(TGridSize)> CreateAllRelatedPositions(
-        const std::array<std::array<Position, GetNumberOfRelatedPositionInGroup(TGridSize)>, RelatedPositionTypeCount>& allRelatedPositions)
+constexpr std::array<Position, GetAllRelatedPositionNumber(TGridSize)> CreateAllRelatedPositions(Position const& currentPosition)
 {
     std::array<Position, GetAllRelatedPositionNumber(TGridSize)> allRelatedWithoutDuplication {};
 
     auto it = allRelatedWithoutDuplication.begin();
 
-    for (const auto& relatedPositions : allRelatedPositions)
+    for (auto const& relatedPositions : {CreateVerticalRelatedPositions<TGridSize>(currentPosition), CreateHorizontalRelatedPositions<TGridSize>(currentPosition), CreateBlockRelatedPositions<TGridSize>(currentPosition)})
     {
-        for (const auto& pos : relatedPositions)
+        for (auto const& pos : relatedPositions)
         {
             if (!any_of_equal(allRelatedWithoutDuplication, pos))
             {
@@ -127,34 +171,15 @@ constexpr std::array<Position, GetAllRelatedPositionNumber(TGridSize)> CreateAll
     return allRelatedWithoutDuplication;
 }
 
-template<int TGridSize>
-struct RelatedPositionsGroups
-{
-    constexpr RelatedPositionsGroups() = default;
-
-    constexpr RelatedPositionsGroups(Position currentPosition) :
-        m_Horizontal(CreateHorizontalRelatedPositions<TGridSize>(currentPosition)),
-        m_Vertical(CreateVerticalRelatedPositions<TGridSize>(currentPosition)),
-        m_Block(CreateBlockRelatedPositions<TGridSize>(currentPosition)),
-        m_All(CreateAllRelatedPositions<TGridSize>({m_Horizontal, m_Vertical, m_Block}))
-    {}
-
-    std::array<Position, GetNumberOfRelatedPositionInGroup(TGridSize)> m_Horizontal;
-    std::array<Position, GetNumberOfRelatedPositionInGroup(TGridSize)> m_Vertical;
-    std::array<Position, GetNumberOfRelatedPositionInGroup(TGridSize)> m_Block;
-
-    std::array<Position, GetAllRelatedPositionNumber(TGridSize)> m_All;
-};
-
 constexpr int PosToInt(Position const& position, int gridSize)
 {
     return position.m_Row * gridSize + position.m_Col;
 }
 
-template<int TGridSize>
-constexpr std::array<RelatedPositionsGroups<TGridSize>, TGridSize * TGridSize> CreateAllRelatedPositionsGroups()
+template<int TGridSize, int TRelatedPosCount, typename Fun>
+constexpr std::array<std::array<Position, TRelatedPosCount>, TGridSize * TGridSize> CreateAllRelatedPositionsGroups(Fun GetRelatedPosition)
 {
-    std::array<RelatedPositionsGroups<TGridSize>, TGridSize * TGridSize> allRelatedPositionsGroups {};
+    std::array<std::array<Position, TRelatedPosCount>, TGridSize * TGridSize> allRelatedPositionsGroups {};
 
     for(int row = 0; row < TGridSize; row++)
     {
@@ -162,8 +187,7 @@ constexpr std::array<RelatedPositionsGroups<TGridSize>, TGridSize * TGridSize> C
         {
             Position pos {row, col};
 
-            RelatedPositionsGroups<TGridSize> relatedPositionsGroups {pos};
-            allRelatedPositionsGroups[PosToInt(pos, TGridSize)] = relatedPositionsGroups;
+            allRelatedPositionsGroups[PosToInt(pos, TGridSize)] = GetRelatedPosition(pos);
         }
     }
 
@@ -173,44 +197,92 @@ constexpr std::array<RelatedPositionsGroups<TGridSize>, TGridSize * TGridSize> C
 template<int TGridSize>
 struct AllRelatedPositionsGroups
 {
-    constexpr AllRelatedPositionsGroups() : m_AllRelatedPositionsGroups(CreateAllRelatedPositionsGroups<TGridSize>())
-    {}
+    Ranges<TGridSize - 1, TGridSize * TGridSize> m_Vertical = CreateAllRelatedPositionsGroups<TGridSize, TGridSize - 1>(CreateVerticalRelatedPositions<TGridSize>);
+    Ranges<TGridSize - 1, TGridSize * TGridSize> m_Horizontal = CreateAllRelatedPositionsGroups<TGridSize, TGridSize - 1>(CreateHorizontalRelatedPositions<TGridSize>);
+    Ranges<TGridSize - 1, TGridSize * TGridSize> m_Block = CreateAllRelatedPositionsGroups<TGridSize, TGridSize - 1>(CreateBlockRelatedPositions<TGridSize>);
 
-    constexpr RelatedPositionsGroups<TGridSize> const& operator[](Position const& position) const
-    {
-        return m_AllRelatedPositionsGroups[PosToInt(position, TGridSize)];
-    }
-
-    std::array<RelatedPositionsGroups<TGridSize>, TGridSize * TGridSize> m_AllRelatedPositionsGroups;
+    Ranges<GetAllRelatedPositionNumber(TGridSize), TGridSize * TGridSize> m_All = CreateAllRelatedPositionsGroups<TGridSize, GetAllRelatedPositionNumber(TGridSize)>(CreateAllRelatedPositions<TGridSize>);
 };
 
 constexpr AllRelatedPositionsGroups<9> AllRelatedPositionsGroups9x9 {};
 constexpr AllRelatedPositionsGroups<4> AllRelatedPositionsGroups4x4 {};
 
+constexpr int GetGroupsNumberInGrid(int gridSize)
+{
+    constexpr int groupType {3};
+    return gridSize * groupType;
+}
+
+template<int TGridSize>
+constexpr std::array<std::array<Position, TGridSize>, GetGroupsNumberInGrid(TGridSize)> CreateAllGroupsPositions()
+{
+    std::array<std::array<Position, TGridSize>, GetGroupsNumberInGrid(TGridSize)> allGroupsPositions {};
+
+    auto it = allGroupsPositions.begin();
+
+    for (int col = 0; col < TGridSize; col++)
+    {
+        *it = GetAllPositions<TGridSize>(0, TGridSize, col, 1);
+        it++;
+    }
+
+    for (int row = 0; row < TGridSize; row++)
+    {
+        *it = GetAllPositions<TGridSize>(row, 1, 0, TGridSize);
+        it++;
+    }
+
+    const int blockSize = GetBlockSize(TGridSize);
+    for (int row = 0; row < TGridSize; row += blockSize)
+    {
+        for (int col = 0; col < TGridSize; col += blockSize)
+        {
+            *it = GetAllPositions<TGridSize>(row, blockSize, col, blockSize);
+            it++;
+        }
+    }
+
+    return allGroupsPositions;
+}
+
+template<int TGridSize>
+struct AllGroupsPositions
+{
+    Ranges<TGridSize, GetGroupsNumberInGrid(TGridSize)> m_Ranges = CreateAllGroupsPositions<TGridSize>();
+};
+
+constexpr AllGroupsPositions<9> AllGroupsPositions9x9 {};
+constexpr AllGroupsPositions<4> AllGroupsPositions4x4 {};
+
 Range<Position> RelatedPositionsGetterImpl::GetRelatedHorizontalPositions(Position const& selectedPosition, int gridSize) const
 {
     return gridSize == 4 ?
-                Range<Position>{ AllRelatedPositionsGroups4x4[selectedPosition].m_Horizontal } :
-                Range<Position>{ AllRelatedPositionsGroups9x9[selectedPosition].m_Horizontal };
+                AllRelatedPositionsGroups4x4.m_Horizontal[PosToInt(selectedPosition, gridSize)] :
+                AllRelatedPositionsGroups9x9.m_Horizontal[PosToInt(selectedPosition, gridSize)];
 }
 
 Range<Position> RelatedPositionsGetterImpl::GetRelatedVerticalPositions(Position const& selectedPosition, int gridSize) const
 {
     return gridSize == 4 ?
-                Range<Position>{ AllRelatedPositionsGroups4x4[selectedPosition].m_Vertical } :
-                Range<Position>{ AllRelatedPositionsGroups9x9[selectedPosition].m_Vertical };
+                AllRelatedPositionsGroups4x4.m_Vertical[PosToInt(selectedPosition, gridSize)] :
+                AllRelatedPositionsGroups9x9.m_Vertical[PosToInt(selectedPosition, gridSize)];
 }
 
 Range<Position> RelatedPositionsGetterImpl::GetRelatedBlockPositions(Position const& selectedPosition, int gridSize) const
 {
     return gridSize == 4 ?
-                Range<Position>{ AllRelatedPositionsGroups4x4[selectedPosition].m_Block } :
-                Range<Position>{ AllRelatedPositionsGroups9x9[selectedPosition].m_Block };
+                AllRelatedPositionsGroups4x4.m_Block[PosToInt(selectedPosition, gridSize)] :
+                AllRelatedPositionsGroups9x9.m_Block[PosToInt(selectedPosition, gridSize)];
 }
 
 Range<Position> RelatedPositionsGetterImpl::GetAllRelatedPositions(Position const& selectedPosition, int gridSize) const
 {
     return gridSize == 4 ?
-                Range<Position>{ AllRelatedPositionsGroups4x4[selectedPosition].m_All } :
-                Range<Position>{ AllRelatedPositionsGroups9x9[selectedPosition].m_All };
+                AllRelatedPositionsGroups4x4.m_All[PosToInt(selectedPosition, gridSize)] :
+                AllRelatedPositionsGroups9x9.m_All[PosToInt(selectedPosition, gridSize)];
+}
+
+Range<Range<Position>> RelatedPositionsGetterImpl::GetAllGroupsPositions(int gridSize) const
+{
+    return gridSize == 4 ? AllGroupsPositions4x4.m_Ranges.m_Ranges : AllGroupsPositions9x9.m_Ranges.m_Ranges;
 }

@@ -19,10 +19,9 @@ public:
     {}
 
     template<typename TContainer1, typename TContainer2>
-    void ExpectIsPermutation(TContainer1 const& lhs, TContainer2 const& rhs)
+    bool IsPermutation(TContainer1 const& lhs, TContainer2 const& rhs)
     {
-        EXPECT_THAT(lhs.size(), Eq(rhs.size()));
-        EXPECT_TRUE(std::is_permutation(lhs.begin(), lhs.end(), rhs.begin()));
+        return std::is_permutation(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
     }
 
     RelatedPositionsGetterImpl m_RelatedPositionsGetter;
@@ -40,7 +39,7 @@ TEST_F(TestRelatedPositionsGetter, GetRelatedHorizontalPositions)
         Position{3, 3},
     };
 
-    ExpectIsPermutation(relatedPositions, expectedPositionsGroup);
+    EXPECT_TRUE(IsPermutation(relatedPositions, expectedPositionsGroup));
 }
 
 TEST_F(TestRelatedPositionsGetter, GetRelatedVerticalPositions)
@@ -55,7 +54,7 @@ TEST_F(TestRelatedPositionsGetter, GetRelatedVerticalPositions)
         Position{2, 2},
     };
 
-    ExpectIsPermutation(relatedPositions, expectedPositionsGroup);
+    EXPECT_TRUE(IsPermutation(relatedPositions, expectedPositionsGroup));
 }
 
 TEST_F(TestRelatedPositionsGetter, GetRelatedBlockPositions)
@@ -70,7 +69,7 @@ TEST_F(TestRelatedPositionsGetter, GetRelatedBlockPositions)
         Position{3, 3},
     };
 
-    ExpectIsPermutation(relatedPositions, expectedPositionsGroup);
+    EXPECT_TRUE(IsPermutation(relatedPositions, expectedPositionsGroup));
 }
 
 TEST_F(TestRelatedPositionsGetter, GetAllRelatedPositions)
@@ -89,7 +88,44 @@ TEST_F(TestRelatedPositionsGetter, GetAllRelatedPositions)
         Position{2, 3},
     };
 
-    ExpectIsPermutation(relatedPositions, expectedPositionsGroup);
+    EXPECT_TRUE(IsPermutation(relatedPositions, expectedPositionsGroup));
+}
+
+TEST_F(TestRelatedPositionsGetter, GetAllGroupsPositions)
+{
+    const int gridSize {4};
+
+    auto relatedPositions = m_RelatedPositionsGetter.GetAllGroupsPositions(gridSize);
+
+    EXPECT_THAT(relatedPositions.size(), Eq(12));
+
+    std::vector<Position> expectedHorizontal {
+        Position{3, 0},
+        Position{3, 1},
+        Position{3, 2},
+        Position{3, 3},
+    };
+
+    std::vector<Position> expectedVertical {
+        Position{0, 2},
+        Position{1, 2},
+        Position{2, 2},
+        Position{3, 2},
+    };
+
+    std::vector<Position> expectedBlock {
+        Position{2, 2},
+        Position{2, 3},
+        Position{3, 2},
+        Position{3, 3},
+    };
+
+    for (auto const& expected : {expectedHorizontal, expectedVertical, expectedBlock})
+    {
+        EXPECT_THAT(
+                std::count_if(relatedPositions.begin(), relatedPositions.end(), [this, expected](auto const& positions){ return IsPermutation(positions, expected); }),
+                Eq(1));
+    }
 }
 
 } /* namespace test */

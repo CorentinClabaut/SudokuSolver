@@ -3,18 +3,12 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include "FoundPositions.hpp"
+#include "Value.hpp"
+#include "Grid.hpp"
 #include "utils/Utils.hpp"
 
-#include "FoundPositions.hpp"
-
-#include "mock/MockRelatedPositionsGetter.hpp"
-
-using testing::_;
 using testing::Eq;
-using testing::Ref;
-using testing::Return;
-using testing::ReturnRef;
-using testing::StrictMock;
 
 namespace sudoku
 {
@@ -27,24 +21,9 @@ public:
     TestRelatedPossibilitiesRemover()
     {}
 
-    void SetupCel1x1RelatedPositionsGetter()
-    {
-        static const std::array<Position, 7> m_1x1AllRelatedPositions {
-            Position{1, 0},
-            Position{1, 2},
-            Position{1, 3},
-            Position{0, 1},
-            Position{2, 1},
-            Position{3, 1},
-            Position{0, 0}};
-
-        EXPECT_CALL(*m_RelatedPositionsGetter, GetAllRelatedPositions(Position{1, 1}, 4))
-                .WillRepeatedly(Return(Range{m_1x1AllRelatedPositions}));
-    }
-
     std::unique_ptr<RelatedPossibilitiesRemover> MakeRelatedPossibilitiesRemover()
     {
-        return std::make_unique<RelatedPossibilitiesRemoverImpl>(std::move(m_RelatedPositionsGetter));
+        return std::make_unique<RelatedPossibilitiesRemoverImpl>();
     }
 
     Grid CreateExpectedGridWithValuePos1x1SetTo(Value value)
@@ -64,8 +43,6 @@ public:
     }
 
     const int m_GridSize {4};
-
-    std::unique_ptr<MockRelatedPositionsGetter> m_RelatedPositionsGetter = std::make_unique<MockRelatedPositionsGetter>();
 };
 
 TEST_F(TestRelatedPossibilitiesRemover, RemoveSetValueFromRelatedCells)
@@ -74,8 +51,6 @@ TEST_F(TestRelatedPossibilitiesRemover, RemoveSetValueFromRelatedCells)
 
     Grid grid {m_GridSize};
     FoundPositions foundPositions;
-
-    SetupCel1x1RelatedPositionsGetter();
 
     Position currentPosition {1, 1};
     auto& cell = grid.GetCell(currentPosition);
@@ -96,8 +71,6 @@ TEST_F(TestRelatedPossibilitiesRemover, RemoveSetValueFromRelatedCells_RelatedCe
 
     Grid grid {m_GridSize};
     FoundPositions foundPositions;
-
-    SetupCel1x1RelatedPositionsGetter();
 
     Position currentPosition {1, 1};
     auto& cell = grid.GetCell(currentPosition);
@@ -123,8 +96,6 @@ TEST_F(TestRelatedPossibilitiesRemover, RemoveSetValueFromRelatedCells_RelatedCe
     Grid grid {m_GridSize};
     FoundPositions foundPositions;
 
-    SetupCel1x1RelatedPositionsGetter();
-
     Position currentPosition {1, 1};
     auto& cell = grid.GetCell(currentPosition);
     cell.SetValue(cellValue);
@@ -140,8 +111,6 @@ TEST_F(TestRelatedPossibilitiesRemover, RemoveSetValueFromRelatedCells_FindNewCe
 
     Grid grid {m_GridSize};
     FoundPositions foundPositions;
-
-    SetupCel1x1RelatedPositionsGetter();
 
     Position currentPosition {1, 1};
     auto& cell = grid.GetCell(currentPosition);
@@ -165,8 +134,6 @@ TEST_F(TestRelatedPossibilitiesRemover, RemoveSetValueFromRelatedCells_CellValue
 {
     Grid grid {m_GridSize};
     FoundPositions foundPositions;
-
-    SetupCel1x1RelatedPositionsGetter();
 
     Position currentPosition {1, 1};
 

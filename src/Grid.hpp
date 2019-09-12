@@ -23,7 +23,7 @@ public:
     auto end() { return m_Cells.end(); }
 
     Cell& GetCell(Position const& position);
-    const Cell& GetCell(Position const& position) const;
+    Cell const& GetCell(Position const& position) const;
 
     int GetGridSize() const;
 
@@ -35,6 +35,6 @@ private:
 
 std::ostream& operator<<(std::ostream& os, Grid const& grid);
 
-bool operator==(const Grid& lhs, const Grid& rhs);
+bool operator==(Grid const& lhs, Grid const& rhs);
 
 } // namespace sudoku

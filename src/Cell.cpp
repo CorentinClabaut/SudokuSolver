@@ -23,7 +23,7 @@ void Cell::RemovePossibility(Value const& value)
 {
     m_Possibilities.RemovePossibility(value);
 
-    if (m_Possibilities.GetNumberPossibilitiesLeft() == 0)
+    if (m_Possibilities.Count() == 0)
         throw std::runtime_error("Removed last possibility from cell");
 }
 
@@ -42,17 +42,17 @@ bool Cell::IsSet() const
     return m_Possibilities.OnlyOnePossibilityLeft();
 }
 
-const Possibilities& Cell::GetPossibilities() const
+Possibilities const& Cell::GetPossibilities() const
 {
     return m_Possibilities;
 }
 
 int Cell::GetNumberPossibilitiesLeft() const
 {
-    return m_Possibilities.GetNumberPossibilitiesLeft();
+    return m_Possibilities.Count();
 }
 
-const Position& Cell::GetPosition() const
+Position const& Cell::GetPosition() const
 {
     return m_Position;
 }

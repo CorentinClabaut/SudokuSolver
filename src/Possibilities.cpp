@@ -33,39 +33,26 @@ constexpr std::array<int, Pow(2, TNumPossibilities)> CreateNumBitSetLookupTable(
     return numBitSetLookupTable;
 }
 
-constexpr std::array<int, Pow(2, constants::MaxGridSize)> NumBitSetLookupTable {CreateNumBitSetLookupTable<constants::MaxGridSize>()};
+constexpr std::array<int, Pow(2, MaxGridSize)> NumBitSetLookupTable {CreateNumBitSetLookupTable<MaxGridSize>()};
 
 } // anonymous namespace
 
 Possibilities::Possibilities(int gridSize)
 {
-    if (gridSize > constants::MaxGridSize)
-        throw std::runtime_error("Invalid grid size '" + std::to_string(gridSize) + "' max '" + std::to_string(constants::MaxGridSize) + "'");
+    if (gridSize > MaxGridSize)
+        throw std::runtime_error("Invalid grid size '" + std::to_string(gridSize) + "' max '" + std::to_string(MaxGridSize) + "'");
 
     for (int i = 0; i < gridSize; i++)
         m_Possibilities.set(i);
 }
 
-Possibilities::Possibilities(Possibilities const& possibilities)
-{
-    m_Possibilities = possibilities.m_Possibilities;
-}
-
-Possibilities& Possibilities::operator=(Possibilities const& possibilities)
-{
-    m_Possibilities = possibilities.m_Possibilities;
-
-    return *this;
-}
-
-void Possibilities::RemovePossibilities(Possibilities const& possibilities)
-{
-    RemovePossibilitiesImpl(possibilities.m_Possibilities);
-}
+Possibilities::Possibilities(PossibilitiesBitSet const& possibilities) :
+    m_Possibilities(possibilities)
+{}
 
 void Possibilities::RemovePossibility(Value const& value)
 {
-    RemovePossibilitiesImpl(1 << (value - 1));
+    m_Possibilities.reset(value - 1);
 }
 
 void Possibilities::SetValue(Value const& value)
@@ -90,7 +77,8 @@ Value Possibilities::GetPossibilityLeft() const
     auto possibilities = m_Possibilities;
 
     int val = 0;
-    while (possibilities != 0) {
+    while (possibilities != 0)
+    {
         possibilities >>= 1;
         val++;
     }
@@ -103,7 +91,12 @@ bool Possibilities::Contains(Value value) const
     return m_Possibilities.test(value - 1);
 }
 
-int Possibilities::GetNumberPossibilitiesLeft() const
+PossibilitiesBitSet const& Possibilities::GetBitSet() const
+{
+    return m_Possibilities;
+}
+
+int Possibilities::Count() const
 {
     return NumBitSetLookupTable[m_Possibilities.to_ulong()];
 }
@@ -123,12 +116,7 @@ bool Possibilities::operator==(PossibilitiesBitSet const& possibilities) const
     return m_Possibilities == possibilities;
 }
 
-void Possibilities::RemovePossibilitiesImpl(PossibilitiesBitSet const& possibilities)
-{
-    m_Possibilities = m_Possibilities & ~possibilities;
-}
-
 bool Possibilities::OnlyOnePossibilityLeftImpl() const
 {
-    return GetNumberPossibilitiesLeft() == 1;
+    return Count() == 1;
 }

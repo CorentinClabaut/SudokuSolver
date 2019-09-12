@@ -3,13 +3,13 @@
 #include <memory>
 
 #include "FoundPositions.hpp"
+#include "RelatedPositionsGetter.hpp"
 
 namespace sudoku
 {
 
 class Grid;
 class Position;
-class RelatedPositionsGetter;
 
 class RelatedPossibilitiesRemover
 {
@@ -22,12 +22,10 @@ public:
 class RelatedPossibilitiesRemoverImpl : public RelatedPossibilitiesRemover
 {
 public:
-    RelatedPossibilitiesRemoverImpl(std::unique_ptr<RelatedPositionsGetter> relatedPositionsGetter);
-
     void UpdateRelatedPossibilities(Position const& newFoundPosition, Grid& grid, FoundPositions& foundPositions) const override;
 
 private:
-    std::unique_ptr<RelatedPositionsGetter> m_RelatedPositionsGetter;
+    const RelatedPositionsGetterImpl m_RelatedPositionsGetter;
 };
 
 } /* namespace sudoku */

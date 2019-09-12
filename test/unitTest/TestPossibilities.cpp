@@ -20,9 +20,9 @@ public:
 
 TEST_F(TestPossibilities, AllPossibilitiesSetAtConstruction)
 {
-    EXPECT_THAT(Possibilities {4}, Eq(Possibilities::PossibilitiesBitSet{0b1111}));
+    EXPECT_THAT(Possibilities {4}, Eq(PossibilitiesBitSet{0b1111}));
 
-    EXPECT_THAT(Possibilities {9}, Eq(Possibilities::PossibilitiesBitSet{0b111111111}));
+    EXPECT_THAT(Possibilities {9}, Eq(PossibilitiesBitSet{0b111111111}));
 }
 
 TEST_F(TestPossibilities, RemoveOneValue)
@@ -31,7 +31,7 @@ TEST_F(TestPossibilities, RemoveOneValue)
 
     possibilities.RemovePossibility(3);
 
-    EXPECT_THAT(possibilities, Eq(Possibilities::PossibilitiesBitSet{0b1011}));
+    EXPECT_THAT(possibilities, Eq(PossibilitiesBitSet{0b1011}));
 }
 
 TEST_F(TestPossibilities, RemoveSameValueTwice)
@@ -41,20 +41,7 @@ TEST_F(TestPossibilities, RemoveSameValueTwice)
     possibilities.RemovePossibility(3);
     possibilities.RemovePossibility(3);
 
-    EXPECT_THAT(possibilities, Eq(Possibilities::PossibilitiesBitSet{0b1011}));
-}
-
-TEST_F(TestPossibilities, RemoveSeveralValues)
-{
-    Possibilities possibilities {4};
-
-    Possibilities possibilitiesToRemove {4};
-    possibilitiesToRemove.RemovePossibility(3); // possibility to keep
-    possibilitiesToRemove.RemovePossibility(1); // possibility to keep
-
-    possibilities.RemovePossibilities(possibilitiesToRemove);
-
-    EXPECT_THAT(possibilities, Eq(Possibilities::PossibilitiesBitSet{0b0101}));
+    EXPECT_THAT(possibilities, Eq(PossibilitiesBitSet{0b1011}));
 }
 
 TEST_F(TestPossibilities, CopyConstructorCopyCorrectPossibilities)
@@ -65,7 +52,7 @@ TEST_F(TestPossibilities, CopyConstructorCopyCorrectPossibilities)
     Possibilities copy {possibilities};
 
     EXPECT_THAT(possibilities, Eq(copy));
-    EXPECT_THAT(copy, Eq(Possibilities::PossibilitiesBitSet{0b1101}));
+    EXPECT_THAT(copy, Eq(PossibilitiesBitSet{0b1101}));
 }
 
 TEST_F(TestPossibilities, SetValue)
@@ -74,7 +61,7 @@ TEST_F(TestPossibilities, SetValue)
 
     possibilities.SetValue(3);
 
-    EXPECT_THAT(possibilities, Eq(Possibilities::PossibilitiesBitSet{0b0100}));
+    EXPECT_THAT(possibilities, Eq(PossibilitiesBitSet{0b0100}));
 }
 
 TEST_F(TestPossibilities, SetSameValueTwice)
@@ -84,7 +71,7 @@ TEST_F(TestPossibilities, SetSameValueTwice)
     possibilities.SetValue(3);
     possibilities.SetValue(3);
 
-    EXPECT_THAT(possibilities, Eq(Possibilities::PossibilitiesBitSet{0b0100}));
+    EXPECT_THAT(possibilities, Eq(PossibilitiesBitSet{0b0100}));
 }
 
 TEST_F(TestPossibilities, SetRemovedValueThrow)
@@ -133,19 +120,19 @@ TEST_F(TestPossibilities, GetPossibilityLeft)
 TEST_F(TestPossibilities, GetNumberPossibilitieLeftAndOnlyOnePossibilityLeft)
 {
     Possibilities possibilities {4};
-    EXPECT_THAT(possibilities.GetNumberPossibilitiesLeft(), Eq(4));
+    EXPECT_THAT(possibilities.Count(), Eq(4));
     EXPECT_FALSE(possibilities.OnlyOnePossibilityLeft());
 
     possibilities.RemovePossibility(2);
-    EXPECT_THAT(possibilities.GetNumberPossibilitiesLeft(), Eq(3));
+    EXPECT_THAT(possibilities.Count(), Eq(3));
     EXPECT_FALSE(possibilities.OnlyOnePossibilityLeft());
 
     possibilities.RemovePossibility(4);
-    EXPECT_THAT(possibilities.GetNumberPossibilitiesLeft(), Eq(2));
+    EXPECT_THAT(possibilities.Count(), Eq(2));
     EXPECT_FALSE(possibilities.OnlyOnePossibilityLeft());
 
     possibilities.RemovePossibility(1);
-    EXPECT_THAT(possibilities.GetNumberPossibilitiesLeft(), Eq(1));
+    EXPECT_THAT(possibilities.Count(), Eq(1));
     EXPECT_TRUE(possibilities.OnlyOnePossibilityLeft());
 }
 

@@ -4,12 +4,12 @@
 #include <vector>
 
 #include "Cell.hpp"
+#include "RelatedPositionsGetter.hpp"
 
 namespace sudoku
 {
 
 class Grid;
-class RelatedPositionsGetter;
 enum class GridStatus;
 
 class GridStatusGetter
@@ -23,8 +23,6 @@ public:
 class GridStatusGetterImpl : public GridStatusGetter
 {
 public:
-    GridStatusGetterImpl(std::unique_ptr<RelatedPositionsGetter> relatedPositionsGetter);
-
     GridStatus GetStatus(Grid& grid) const override;
 
 private:
@@ -34,7 +32,7 @@ private:
     bool IsCellValueValid(Cell const& cell, Grid& grid) const;
     bool AreCellsValid(std::vector<std::reference_wrapper<Cell>> const& cellsSet, Grid& grid) const;
 
-    std::unique_ptr<RelatedPositionsGetter> m_RelatedPositionsGetter;
+    const RelatedPositionsGetterImpl m_RelatedPositionsGetter;
 };
 
 } /* namespace sudoku */
