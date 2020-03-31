@@ -15,10 +15,12 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Werror")
 set(CMAKE_CXX_COMPILER /usr/bin/g++-7)
 set(CMAKE_CXX_STANDARD 17)
 
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup()
+
 find_package(Boost REQUIRED)
 find_package(GTest REQUIRED)
 
-include_directories(${Boost_INCLUDE_DIRS})
 include_directories("src/")
 
 # Sudoku Solver Library
@@ -31,8 +33,7 @@ add_library(sudoku_solver STATIC
 
 target_link_libraries(sudoku_solver
     pthread
-    boost_system
-    boost_thread
+    ${CONAN_LIBS}
 )
 
 # Benchmark Executable
@@ -50,8 +51,6 @@ target_link_libraries(sudoku_solver_benchmark
 
 # Test Executable
 
-include_directories(${GTEST_INCLUDE_DIRS})
-include_directories(${GMOCK_INCLUDE_DIRS})
 include_directories("test/")
 
 FILE(GLOB_RECURSE TEST_SRCS test/*.cpp)
@@ -61,8 +60,7 @@ add_executable(sudoku_solver_tests
 )
 
 target_link_libraries(sudoku_solver_tests
-    gmock
-    gtest
+    ${CONAN_LIBS}
     sudoku_solver
     )
     
